@@ -4,11 +4,82 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Canv</title>
-    
+    <title>Canvas</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            padding: 0;
+        }
+        #canvas2d, #canvasgl {
+            position: absolute;
+            z-index: 1;
+            
+            width: 90%;
+            height: 90%;
+            
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            
+            border: 4px double #58A4Fd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #1884dd;
+        }
+        #canvas2d {
+            z-index: 2;
+        }
+    </style>
 </head>
-<body>
-    <p>Aa</p>
+<body onload="main()">
+    <!-- DOM -->
+    <canvas id="canvas2d">
+        Please use a browser that supports "canvas"
+    </canvas>
+    
+    <script id="mat.js"></script>
+    <script id="plane2d.js"></script>
+    <script id="animated-plane2d.js"></script>
+    <script id="element-observer.js"></script>
+    <script id="animation-loop.js"></script>
+    <script id="canvas2d.js"></script>
+    <script>
+        async function loadScriptSequentially(scripts) {
+            for (const lib of scripts) {
+                await new Promise((resolve, reject) => {
+                    const script = document.getElementById(lib);
+                    script.src = 'assets/js/' + script.id + '?t=' + Date.now();
+                    script.onload = resolve;
+                    script.onerror = reject;
+                });
+            }
+        }
+        const libs = ['mat.js', 'plane2d.js', 'animated-plane2d.js', 'element-observer.js', 'animation-loop.js', 'canvas2d.js'];
+        loadScriptSequentially(libs).catch(console.error);
+        //.forEach((lib) => document.getElementById(lib).src = document.getElementById(lib).id + '?t=' + Date.now() );
+    </script>
+    <script>
+        function main() {
+            let canvas = document.getElementById('canvas2d');
+            let canvas2d = new Canvas2D(canvas);
+            let draw = function(elapsed, dt) {
+                canvas2d.draw_line_plane(1, 2, 4, 2);
+                canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5);
+            }
+            canvas2d.add_draw(draw);
+            
+            let amod = function(x, d) {
+                return ((x%d)+d)%d;
+            }
+            
+            let osc = function(x, min, max, ) {
+                return amod(x, max-min);
+            }
+            
+            for(let i = -9; i <= 9; ++i) {
+                console.log(i, amod(i, 3));
+            }
+        }
+    </script>
 </body>
 
 </html>

@@ -56,6 +56,8 @@ AnimatedPlane2D.prototype.dt_transform = function(dt, xpower, length, xmultiplie
 
 // Maybe work with formula for acceleration
 AnimatedPlane2D.prototype.adjust_position = function(dt) {
+    let threshold = 0.00001;
+
     let momentary_move_proportion = 0.5;
     let dt_limit = 150;
     let extra_mul = 1.0;
@@ -66,10 +68,18 @@ AnimatedPlane2D.prototype.adjust_position = function(dt) {
     let deffered_dx = this.move_accumulated.x * (1.0 - momentary_move_proportion);
     let deffered_dy = this.move_accumulated.y * (1.0 - momentary_move_proportion);
     
+
+
     this.move_accumulated.x = 0;
     this.move_accumulated.y = 0;
     
-    this.plane.move_for(momentary_dx, momentary_dy);
+    if (Math.abs(momentary_dx) > threshold || Math.abs(momentary_dy) > threshold)
+        this.plane.move_for(momentary_dx, momentary_dy);
+    else {
+        this.move_accumulated.x += momentary_dx;
+        this.move_accumulated.y += momentary_dy;
+    }
+
     
     let ratio = this.dt_transform(Math.min(dt, dt_limit), 1, dt_limit, 0.06, 1);
     
@@ -79,7 +89,12 @@ AnimatedPlane2D.prototype.adjust_position = function(dt) {
     this.move_deffered.x *= 1 - ratio;
     this.move_deffered.y *= 1 - ratio;
     
-    this.plane.move_for(deffered_x_current, deffered_y_current);
+    if (Math.abs(deffered_x_current) > threshold || Math.abs(deffered_y_current) > threshold)
+        this.plane.move_for(deffered_x_current, deffered_y_current);
+    else {
+        this.move_accumulated.x += deffered_x_current;
+        this.move_accumulated.y += deffered_y_current;
+    }
     
     // Multiply move direction by dot product to make better path changing
     
@@ -88,15 +103,21 @@ AnimatedPlane2D.prototype.adjust_position = function(dt) {
 }
 
 AnimatedPlane2D.prototype.adjust_scale = function(dt) {
+    let threshold = 0.00001;
+
     let dt_limit = 450;
     
+    if (Math.abs(this.scale_power_accumulated) < threshold)
+        return;
+
     let ratio = this.dt_transform(Math.min(dt, dt_limit), 1, dt_limit, 1, 1);
     
     this.plane.scale_at(this.scale_point.x, this.scale_point.y, this.scale_power_accumulated * 5 * ratio);
-    
+
     this.scale_power_accumulated *= 1 - ratio;
 }
 
+AnimatedPlane2D.data_members = ['move_accumulated', 'move_deffered', 'scale_point', 'scale_power_accumulated'];
 AnimatedPlane2D.prototype.create = function(plane) {
     if (plane) {
         this.set_plane(plane);
@@ -106,19 +127,5 @@ AnimatedPlane2D.prototype.create = function(plane) {
     }
 }
 
-;((parent_class, child_class, delegate_name) => {
-    child_methods = Object.getOwnPropertyNames(child_class.prototype)
-        .filter((method) => typeof child_class.prototype[method] === 'function');
-    
-    parent_methods = Object.getOwnPropertyNames(parent_class.prototype)
-        .filter((method) => typeof parent_class.prototype[method] === 'function');
-    
-    parent_methods
-        .forEach(function(parent_method) {
-            if (!child_methods.find((child_method) => child_method == parent_method)) {
-                child_class.prototype[parent_method] = function(...args) {
-                    return this[delegate_name][parent_method](...args);
-                }
-            }
-        });
-})(Plane2D, AnimatedPlane2D, 'plane');
+inherit_undefined_methods(Plane2D, AnimatedPlane2D, 'plane');
+generate_accessors(AnimatedPlane2D);

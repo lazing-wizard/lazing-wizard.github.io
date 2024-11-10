@@ -36,6 +36,7 @@
         Please use a browser that supports "canvas"
     </canvas>
     
+    <script id="prototype-mods.js"></script>
     <script id="mat.js"></script>
     <script id="plane2d.js"></script>
     <script id="animated-plane2d.js"></script>
@@ -53,7 +54,7 @@
                 });
             }
         }
-        const libs = ['mat.js', 'plane2d.js', 'animated-plane2d.js', 'element-observer.js', 'animation-loop.js', 'canvas2d.js'];
+        const libs = ['prototype-mods.js', 'mat.js', 'plane2d.js', 'animated-plane2d.js', 'element-observer.js', 'animation-loop.js', 'canvas2d.js'];
         loadScriptSequentially(libs).catch(console.error);
         //.forEach((lib) => document.getElementById(lib).src = document.getElementById(lib).id + '?t=' + Date.now() );
     </script>
@@ -66,18 +67,6 @@
                 canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5);
             }
             canvas2d.add_draw(draw);
-            
-            let amod = function(x, d) {
-                return ((x%d)+d)%d;
-            }
-            
-            let osc = function(x, min, max, ) {
-                return amod(x, max-min);
-            }
-            
-            for(let i = -9; i <= 9; ++i) {
-                console.log(i, amod(i, 3));
-            }
         }
     </script>
 </body>

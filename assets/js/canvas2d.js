@@ -61,20 +61,31 @@ Canvas2D.prototype.draw_lines_plane = function(x, y) {
     return this;
 }
 
-Canvas2D.prototype.draw_text_plane = function(x, y, text, f) { let ctx = this.context;
+Canvas2D.prototype.draw_text_plane = function(text, x, y, view_offset_x = 0, view_offset_y = 0, format = '') { let ctx = this.context;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    if (format) {
+        if (format[0] == 'r')
+            ctx.textAlign = 'right';
+        else if (format[0] == 'c')
+            ctx.textAlign = 'center';
+        if (format[1] == 't')
+            ctx.textBaseline = 'top';
+        else if (format[1] == 'c')
+            ctx.textBaseline = 'middle';
+    }
+
     text = (text).toString();
-    let metrics = ctx.measureText(text);
-    let text_width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft);
-    let text_height = (metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent);
+    //let metrics = ctx.measureText(text);
+    //let text_width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft);
+    //let text_height = (metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent);
     
     
     let [text_x, text_y] = this.plane.to_view(x, y);
     //console.log(text_x, text_y);
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'left';
-    ctx.font = 'italic ' + Math.round(9*this.pixel_ratio) + 'pt sans-serif';
+    ctx.font = 'italic 9pt sans-serif';
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(text, text_x, text_y);
+    ctx.fillText(text, text_x + view_offset_x, text_y + view_offset_y);
 }
 
 
@@ -153,129 +164,31 @@ Canvas2D.prototype.attach_canvas = function() { let canvas2d = this;
         for (callback of canvas2d.draw_callbacks) {
             callback(elapsed, dt);
         }
-        canvas2d.calculate_grid();
+        canvas2d.draw_grid();
     });
     canvas2d.animation_loop.start();
 }
 
-Canvas2D.prototype.get_grid_step = function() {
-    let getGridStep = function getGridStep(n) {
-        // Calculates grid step as 0.1, 0.25, 0.5, 1, 2, 4, 10, 20, 40, 100...
-        //let two_power = Math.sign(n)*Math.ceil(Math.abs(n)*2/3);
-        //let twoh_power = Math.trunc(n/3);
-        //return Math.pow(2.0, two_power)*Math.pow(2.5, twoh_power);
-        
-        // 0.1 0.2 0.25 0.5 1 2 4 5 10 20 40 50 100 200 400 500 1000 2000 4000
-        //                  0 1 2 3 4  5  6  7  8   9   10  11  12   13   14
-        let two_power = Math.sign(n)*( Math.floor( Math.floor((Math.abs(n) + 0.5) % 4) % 3) + Math.floor((Math.abs(n) + 0.5)/4) );
-        let five_power = Math.sign(n)*Math.floor((Math.abs(n) + 1.5)/4);
-        return Math.pow(2.0, two_power)*Math.pow(5.0, five_power);
-    }
-    let grid_count = 10;
-    
-    let frac_step = Math.max(this.plane.plane.size.x/grid_count, this.plane.plane.size.y/grid_count);
-    
-    this.grid_step = 1;
-    this.grid_scale_count = 1;
-    
-    while (this.grid_step < frac_step) {
-        this.grid_scale_count += 1;
-        this.grid_step = getGridStep(this.grid_scale_count);
-    }
-    
-    while (true) {
-        let grid_scale_count = this.grid_scale_count - 1;
-        let grid_step = getGridStep(grid_scale_count);
-        if (grid_step < frac_step) {
-            let lesser_diff = frac_step - grid_step;
-            let bigger_diff = this.grid_step - frac_step;
-            if (bigger_diff > lesser_diff) {
-                this.grid_scale_count = grid_scale_count;
-                this.grid_step = grid_step;
-            }
-            break;
-        }
-        this.grid_scale_count = grid_scale_count;
-        this.grid_step = grid_step;
-    }
-    
-    //https://www.desmos.com/calculator/9ophh2oj8v
-    
+let format_grid_number = function(number) {
+    let text = (number).toFixed(12);
+    if (text.match(/\./))
+        return text.replace(/[.]*[0]+$/, '');
+    return text;
 }
 
-Canvas2D.prototype.calculate_grid = function() {
-    
-    this.get_grid_step();
-    
-    this.grid_center = {};
-    
-    this.grid_center.x = Math.trunc(this.plane.plane.center.x/this.grid_step)*this.grid_step;
-    this.grid_center.y = Math.trunc(this.plane.plane.center.y/this.grid_step)*this.grid_step;
-    
-    let ctx = this.context;
-    
-    ctx.lineWidth = Math.round(1*this.pixelRatio);
-    
-    
-    let to = this;
-    
-    // Horizontal lines
-    let draw_horizontal = function(shift) {
-        to.draw_line_plane(to.plane.plane.min.x, shift, to.plane.plane.max.x, shift);
-        //let text = format_grid_number(shift);
-        //let metrics = ctx.measureText(text);
-        //let text_width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft)/graph.canvas_size.w*graph.plane_size.w;
-        //let text_x = Math.min(Math.max(0.0 + wm, graph.min.x), graph.max.x - text_width);
-        //graph.drawtext(text, text_x, shift - hm);
+Canvas2D.prototype.draw_grid = function() { let ctx = this.context;
+    ctx.lineWidth = 1;
+    for (let x of this.plane.get_vertical_grids()) {
+        this.draw_line_plane(x, this.plane.get_min().y, x, this.plane.get_max().y);
+        this.draw_text_plane(format_grid_number(x), x, 0, 2, 2);
     }
-    let shift;
-    shift = this.grid_center.y;
-    draw_horizontal(shift);
-    shift = this.grid_center.y + this.grid_step;
-    while (shift < this.plane.plane.center.y + this.plane.plane.span.y) {
-        draw_horizontal(shift);
-        shift += this.grid_step;
-    }
-    shift = this.grid_center.y - this.grid_step;
-    while (shift > this.plane.plane.center.y - this.plane.plane.span.y) {
-        draw_horizontal(shift);
-        shift -= this.grid_step;
+
+    for (let y of this.plane.get_horizontal_grids()) {
+        this.draw_line_plane(this.plane.get_min().x, y, this.plane.get_max().x, y);
+        this.draw_text_plane(format_grid_number(y), 0, y, 2, 2);
     }
     
-    // Vertical lines
-    let draw_vertical = function(shift) {
-        to.draw_line_plane(shift, to.plane.plane.min.y, shift, to.plane.plane.max.y);
-        //let text = format_grid_number(shift);
-        //let metrics = ctx.measureText(text);
-        //let text_height = (metrics.actualBoundingBoxDescent)/graph.canvas_size.w*graph.plane_size.w;
-        //let text_y = Math.min(Math.max(0.0 - hm, graph.min.y + text_height), graph.max.y);
-        //graph.drawtext(text, shift + wm, text_y);
-    }
-    shift = this.grid_center.x;
-    draw_vertical(shift);
-    shift = this.grid_center.x + this.grid_step;
-    while (shift < this.plane.plane.center.x + this.plane.plane.span.x) {
-        draw_vertical(shift);
-        shift += this.grid_step;
-    }
-    shift = this.grid_center.x - this.grid_step;
-    while (shift > this.plane.plane.center.x - this.plane.plane.span.x) {
-        draw_vertical(shift);
-        shift -= this.grid_step;
-    }
-    
-    // Main axes
-    
-    //console.log(this.plane.plane.min.y, this.plane.plane.max.y);
-    //console.log(this.plane.plane.min.x, this.plane.plane.max.x);
-    //console.log(this.plane.plane.center.x, this.plane.plane.center.y);
-    ctx.lineWidth = Math.round(2*this.pixelRatio);
-    this.draw_line_plane(0, this.plane.plane.min.y, 0, this.plane.plane.max.y);
-    this.draw_line_plane(this.plane.plane.min.x, 0, this.plane.plane.max.x, 0);
-    this.draw_text_plane(0, 0, 0);
+    ctx.lineWidth = 2;
+    this.draw_line_plane(0, this.plane.get_min().y, 0, this.plane.get_max().y);
+    this.draw_line_plane(this.plane.get_min().x, 0, this.plane.get_max().x, 0);
 }
-
-
-// step/(2^n * 5^m) - 1    find such n and m to converge it to zero
-// step/(2^n * 5^m) = 1
-// log(step) - nlog2 - mlog5 = 0

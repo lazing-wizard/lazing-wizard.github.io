@@ -62,7 +62,7 @@
         function main() {
             let canvas = document.getElementById('canvas2d');
             let canvas2d = new Canvas2D(canvas);
-            let draw = function(elapsed, dt) {
+            let draw = function(dt, elapsed) {
                 canvas2d.draw_line_plane(1, 2, 4, 2);
                 canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5);
             }

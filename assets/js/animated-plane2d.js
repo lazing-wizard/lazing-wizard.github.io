@@ -29,6 +29,7 @@ AnimatedPlane2D.prototype.move_for = function(dx, dy) {
 }
 
 AnimatedPlane2D.prototype.scale_at = function(view_x, view_y, scale) {
+    this.last_scale_timestamp = Date.now();
     this.scale_point.x = view_x;
     this.scale_point.y = view_y;
     if (Math.sign(this.scale_power_accumulated) != Math.sign(scale))
@@ -40,7 +41,7 @@ AnimatedPlane2D.prototype.scale_between = function(view_x0, view_y0, view_x1, vi
     
 }
 
-AnimatedPlane2D.prototype.update = function(dt) {
+AnimatedPlane2D.prototype.update = function(dt, elapsed) {
     this.adjust_position(dt);
     this.adjust_scale(dt);
 }

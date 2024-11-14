@@ -8,7 +8,8 @@
 // It also has 'prev' subobject which has same properties for previous state of element
 // It also has 'diff' subobject which stores difference of current and 'prev' state
 
-function ElementObserver(element, delegate) { this.create(element, delegate); }
+// ...args - single array of delegates
+function ElementObserver(element, ...args) { this.create(element, ...args); }
 
 ElementObserver.prototype.observe = function(element, delegate) {
     this.delegate = delegate;
@@ -34,12 +35,10 @@ ElementObserver.prototype.unobserve = function(element) {
 }
 
 ElementObserver.prototype.setEventPrefix = function(prefix) {
-    this.eventPrefix = prefix;
-    return this;
+    
 }
 ElementObserver.prototype.setEventPostfix = function(postfix) {
-    this.eventPostfix = postfix;
-    return this;
+    
 }
 
 
@@ -186,7 +185,7 @@ ElementObserver.prototype.detachMouseListeners = function() { let observer = thi
 }
 
 /// Do touch events
-var __touchevents = ['touchstart', 'touchmove', 'touchend'];
+var __touchevents = ['touchstart', 'touchmove', 'touchend', 'touchcancel'];
 var __touchsavedprops = ['clientX', 'clientY', 'pageX', 'pageY',
                          'offsetX', 'offsetY', 'screenX', 'screenY',
                          'movementX', 'movementY',
@@ -213,4 +212,31 @@ ElementObserver.prototype.detachTouchListeners = function() { let observer = thi
             observer[event_type+'Listener'] = null;
         }
     });
+}
+
+function reduce_to_array(...args) {
+    let out = [];
+    function _reduce_to_array(out, ...args) {
+        for (let arg of args) {
+            if (arg instanceof Array) {
+                _reduce_to_array(out, ...arg);
+            } else {
+                out.push(arg);
+            }
+        }
+    }
+    _reduce_to_array(out, ...args);
+    return out;
+}
+
+function ElementResizeObserver(element, delegates, ...args) { this.create(element, delegates, ...args); }
+
+ElementResizeObserver.prototype.create = function(element, delegates, ...args) {
+    this.element = null;
+    this.delegates = [];
+
+    this.prefix = 'event';
+    this.postfix = '';
+
+    
 }

@@ -154,15 +154,15 @@ Canvas2D.prototype.attach_canvas = function() { let canvas2d = this;
     
     canvas2d.element_observer.observe(canvas2d.canvas, canvas2d.event_delegate);
     
-    canvas2d.animation_loop.add_on_update(function(elapsed, dt) {
+    canvas2d.animation_loop.add_on_update(function(dt, elapsed) {
         if (canvas2d.canvas.width != canvas2d.canvas.clientWidth * canvas2d.pixel_ratio || canvas2d.canvas.height != canvas2d.canvas.clientHeight * canvas2d.pixel_ratio) {
             canvas2d.canvas.width = canvas2d.canvas.clientWidth * canvas2d.pixel_ratio;
             canvas2d.canvas.height = canvas2d.canvas.clientHeight * canvas2d.pixel_ratio;
         }
-        canvas2d.plane.update(dt);
+        canvas2d.plane.update(dt, elapsed);
         canvas2d.context.clearRect(0, 0, canvas2d.canvas.width, canvas2d.canvas.height);
         for (callback of canvas2d.draw_callbacks) {
-            callback(elapsed, dt);
+            callback(dt, elapsed);
         }
         canvas2d.draw_grid();
     });
@@ -179,16 +179,30 @@ let format_grid_number = function(number) {
 Canvas2D.prototype.draw_grid = function() { let ctx = this.context;
     ctx.lineWidth = 1;
     for (let x of this.plane.get_vertical_grids()) {
-        this.draw_line_plane(x, this.plane.get_min().y, x, this.plane.get_max().y);
-        this.draw_text_plane(format_grid_number(x), x, 0, 2, 2);
+        if (Math.abs(x) > this.plane.get_scale()*0.001) {
+            this.draw_line_plane(x, this.plane.get_min().y, x, this.plane.get_max().y);
+            this.draw_text_plane(format_grid_number(x), x, 0, 2, 2);
+        }
     }
 
     for (let y of this.plane.get_horizontal_grids()) {
-        this.draw_line_plane(this.plane.get_min().x, y, this.plane.get_max().x, y);
-        this.draw_text_plane(format_grid_number(y), 0, y, 2, 2);
+        if (Math.abs(y) > this.plane.get_scale()*0.001) {
+            this.draw_line_plane(this.plane.get_min().x, y, this.plane.get_max().x, y);
+            this.draw_text_plane(format_grid_number(y), 0, y, 2, 2);
+        }
     }
     
     ctx.lineWidth = 2;
-    this.draw_line_plane(0, this.plane.get_min().y, 0, this.plane.get_max().y);
-    this.draw_line_plane(this.plane.get_min().x, 0, this.plane.get_max().x, 0);
+    let v = this.plane.get_min().x <= 0 && this.plane.get_max().x >= 0;
+    if (v) {
+        this.draw_line_plane(0, this.plane.get_min().y, 0, this.plane.get_max().y);
+    }
+    let h = this.plane.get_min().y <= 0 && this.plane.get_max().y >= 0;
+    if (h) {
+        this.draw_line_plane(this.plane.get_min().x, 0, this.plane.get_max().x, 0);
+    }
+    if (v && h) {
+        this.draw_text_plane(0, 0, 0, 2, 2);
+    }
+    
 }

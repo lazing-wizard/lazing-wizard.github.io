@@ -44,7 +44,7 @@ AnimationLoop.prototype.start = function(start_time) { let animationLoop = this;
         animationLoop.elapsed = (Date.now() - animationLoop.start_time);
         animationLoop.dt = animationLoop.elapsed - animationLoop.elapsed_prev;
         for (let callback of animationLoop.on_update) {
-            callback(animationLoop.elapsed, animationLoop.dt);
+            callback(animationLoop.dt, animationLoop.elapsed);
         }
         animationLoop.requestAnimationFrameId = window.requestAnimationFrame(update);
         //animationLoop.requestAnimationFrameId = window.setTimeout(update, 1000/60)

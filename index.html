@@ -31,32 +31,40 @@
     </style>
 </head>
 <body onload="main()">
-    <!-- DOM -->
     <canvas id="canvas2d">
         Please use a browser that supports "canvas"
     </canvas>
-    
-    <script id="prototype-mods.js"></script>
-    <script id="mat.js"></script>
-    <script id="plane2d.js"></script>
-    <script id="animated-plane2d.js"></script>
-    <script id="element-observer.js"></script>
-    <script id="animation-loop.js"></script>
-    <script id="canvas2d.js"></script>
-    <script>
-        async function loadScriptSequentially(scripts) {
-            for (const lib of scripts) {
+
+    <script id="script_loader">
+        const script_names = ['algorithms.js',
+                              'prototype-mods.js',
+                              'mat.js',
+                              'plane2d.js',
+                              'animated-plane2d.js',
+                              'element-observer-base.js',
+                              'element-observer-resize.js',
+                              'element-observer-mouse.js',
+                              'element-observer-keyboard.js',
+                              'element-observer-touch.js',
+                              'element-observer-pointer.js',
+                              'element-observer.js',
+                              'animation-loop.js',
+                              'canvas2d.js'];
+        const first_script = document.getElementById('script_loader');
+        let current_script = first_script;
+        async function loadScriptsSequentially(script_names) {
+            for (const script_name of script_names) {
                 await new Promise((resolve, reject) => {
-                    const script = document.getElementById(lib);
-                    script.src = 'assets/js/' + script.id + '?t=' + Date.now();
-                    script.onload = resolve;
-                    script.onerror = reject;
+                    const new_script = document.createElement('script');
+                    new_script.src = 'assets/js/' + script_name + '?t=' + Date.now();
+                    current_script.parentNode.insertBefore(new_script, current_script.nextSibling);
+                    current_script = new_script;
+                    new_script.onload = resolve;
+                    new_script.onerror = reject;
                 });
             }
         }
-        const libs = ['prototype-mods.js', 'mat.js', 'plane2d.js', 'animated-plane2d.js', 'element-observer.js', 'animation-loop.js', 'canvas2d.js'];
-        loadScriptSequentially(libs).catch(console.error);
-        //.forEach((lib) => document.getElementById(lib).src = document.getElementById(lib).id + '?t=' + Date.now() );
+        loadScriptsSequentially(script_names).catch(console.error);
     </script>
     <script>
         function main() {

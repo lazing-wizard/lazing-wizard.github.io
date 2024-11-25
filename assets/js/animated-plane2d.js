@@ -128,5 +128,5 @@ AnimatedPlane2D.prototype.create = function(plane) {
     }
 }
 
-inherit_undefined_methods(Plane2D, AnimatedPlane2D, 'plane');
+delegate_undefined_methods(AnimatedPlane2D, Plane2D, 'plane');
 generate_accessors(AnimatedPlane2D);

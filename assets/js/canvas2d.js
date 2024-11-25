@@ -134,25 +134,29 @@ Canvas2D.prototype.create = function(...args) {
 }
 
 Canvas2D.prototype.attach_canvas = function() { let canvas2d = this;
-    canvas2d.event_delegate.eventmousedown = function(event, event_prev, event_diff) {
+    canvas2d.event_delegate.onmousedown = function(event, event_prev, event_diff) {
         canvas2d.mouse_pressed = true;
     }
-    canvas2d.event_delegate.eventmouseup = function(event) {
+    canvas2d.event_delegate.onmouseup = function(event) {
         canvas2d.mouse_pressed = false;
     }
-    canvas2d.event_delegate.eventmousemove = function(event) {
+    canvas2d.event_delegate.onmousemove = function(event) {
         if (canvas2d.mouse_pressed) {
             canvas2d.plane.move_for(event.movementX * canvas2d.pixel_ratio, event.movementY * canvas2d.pixel_ratio);
         }
     }
-    canvas2d.event_delegate.eventresize = function(event, event_prev, event_diff) {
-        canvas2d.plane.resize_view(event.clientWidth, event.clientHeight);
+    canvas2d.event_delegate.onresize = function(event) {
+        canvas2d.plane.resize_view(event.contentBoxSize[0].inlineSize, event.contentBoxSize[0].blockSize);
     }
-    canvas2d.event_delegate.eventwheel = function(event) {
+    canvas2d.event_delegate.onwheel = function(event) {
         canvas2d.plane.scale_at(event.offsetX * canvas2d.pixel_ratio, event.offsetY * canvas2d.pixel_ratio, Math.sign(event.deltaY));
     }
     
-    canvas2d.element_observer.observe(canvas2d.canvas, canvas2d.event_delegate);
+    canvas2d.event_delegate.ontouchmove = function(event) {
+        //console.log(event);
+    }
+
+    canvas2d.element_observer.observe(canvas2d.canvas, canvas2d.event_delegate, 'resize', 'mouse_all', 'touch_all');
     
     canvas2d.animation_loop.add_on_update(function(dt, elapsed) {
         if (canvas2d.canvas.width != canvas2d.canvas.clientWidth * canvas2d.pixel_ratio || canvas2d.canvas.height != canvas2d.canvas.clientHeight * canvas2d.pixel_ratio) {

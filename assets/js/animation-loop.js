@@ -3,25 +3,43 @@
 
 function AnimationLoop() { this.create(); }
 
-AnimationLoop.prototype.add_on_start = function(callback) {
-    this.add_callback(callback, this.on_start);
+AnimationLoop.prototype.add_on_start = function(...callbacks) {
+    this.add_callbacks(this.on_start, ...callbacks);
+    return this;
 }
-AnimationLoop.prototype.remove_on_start = function(callback) {
-    this.remove_callback(callback, this.on_start);
+AnimationLoop.prototype.add_on_start_begin = function(...callbacks) {
+    this.add_callbacks_begin(this.on_start, ...callbacks);
+    return this;
+}
+AnimationLoop.prototype.remove_on_start = function(callbacks) {
+    this.remove_callbacks(this.on_start, ...callbacks);
+    return this;
 }
 
-AnimationLoop.prototype.add_on_update = AnimationLoop.prototype.add_on_tick = AnimationLoop.prototype.add_on_loop = function(callback) {
-    this.add_callback(callback, this.on_update);
+AnimationLoop.prototype.add_on_update = AnimationLoop.prototype.add_on_tick = AnimationLoop.prototype.add_on_loop = function(...callbacks) {
+    this.add_callbacks(this.on_update, ...callbacks);
+    return this;
 }
-AnimationLoop.prototype.remove_on_update = AnimationLoop.prototype.remove_on_tick = AnimationLoop.prototype.remove_on_loop = function(callback) {
-    this.remove_callback(callback, this.on_update);
+AnimationLoop.prototype.add_on_update_begin = AnimationLoop.prototype.add_on_tick_begin = AnimationLoop.prototype.add_on_loop_begin = function(...callbacks) {
+    this.add_callbacks_begin(this.on_update, ...callbacks);
+    return this;
+}
+AnimationLoop.prototype.remove_on_update = AnimationLoop.prototype.remove_on_tick = AnimationLoop.prototype.remove_on_loop = function(...callbacks) {
+    this.remove_callbacks(this.on_update, ...callbacks);
+    return this;
 }
 
-AnimationLoop.prototype.add_on_stop = function(callback) {
-    this.add_callback(callback, this.on_stop);
+AnimationLoop.prototype.add_on_stop = function(...callbacks) {
+    this.add_callbacks(this.on_stop, ...callbacks);
+    return this;
 }
-AnimationLoop.prototype.remove_on_stop = function(callback) {
-    this.remove_callback(callback, this.on_stop);
+AnimationLoop.prototype.add_on_stop_begin = function(...callbacks) {
+    this.add_callbacks_begin(this.on_stop, ...callbacks);
+    return this;
+}
+AnimationLoop.prototype.remove_on_stop = function(...callbacks) {
+    this.remove_callbacks(this.on_stop, ...callbacks);
+    return this;
 }
 
 AnimationLoop.prototype.start = function(start_time) { let animationLoop = this;
@@ -50,6 +68,7 @@ AnimationLoop.prototype.start = function(start_time) { let animationLoop = this;
         //animationLoop.requestAnimationFrameId = window.setTimeout(update, 1000/60)
     }
     update();
+    return this;
 }
 
 AnimationLoop.prototype.stop = function() {
@@ -68,15 +87,6 @@ AnimationLoop.prototype.stop = function() {
 
 // implementation
 
-AnimationLoop.prototype.add_callback = function(callback, target) {
-    target.push(callback);
-}
-AnimationLoop.prototype.remove_callback = function(callback, target) {
-    let index = target.indexOf(callback);
-    if (index != -1)
-        target.splice(index, 1);
-}
-
 AnimationLoop.prototype.create = function() {
     this.on_start = [];
     this.on_update = [];
@@ -88,6 +98,16 @@ AnimationLoop.prototype.create = function() {
     this.dt = null;
     
     this.requestAnimationFrameId = null;
+}
+
+AnimationLoop.prototype.add_callbacks = function(target, ...callbacks) {
+    append_unique_to(target, ...reduce_arrays(callbacks));
+}
+AnimationLoop.prototype.add_callbacks_begin = function(target, ...callbacks) {
+    append_unique_to_begin(target, ...reduce_arrays(callbacks));
+}
+AnimationLoop.prototype.remove_callbacks = function(target, ...callbacks) {
+    remove_elements_from(target, ...reduce_arrays(callbacks));
 }
 
 if (!window.requestAnimationFrame) {

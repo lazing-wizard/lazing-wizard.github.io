@@ -125,7 +125,7 @@ Canvas2D.prototype.create = function(...args) {
         this.animation_loop = new AnimationLoop();
     }
     if (!this.plane) {
-        this.plane = new AnimatedPlane2D();
+        this.plane = new AnimatedPlane2D(null, this.animation_loop);
         this.plane.init_view(this.canvas.clientWidth * this.pixel_ratio, this.canvas.clientHeight * this.pixel_ratio);
     }
     if (this.canvas) {
@@ -152,18 +152,13 @@ Canvas2D.prototype.attach_canvas = function() { let canvas2d = this;
         canvas2d.plane.scale_at(event.offsetX * canvas2d.pixel_ratio, event.offsetY * canvas2d.pixel_ratio, Math.sign(event.deltaY));
     }
     
-    canvas2d.event_delegate.ontouchmove = function(event) {
-        //console.log(event);
-    }
-
-    canvas2d.element_observer.observe(canvas2d.canvas, canvas2d.event_delegate, 'resize', 'mouse_all', 'touch_all');
+    canvas2d.element_observer.observe(canvas2d.canvas, canvas2d.event_delegate, 'resize', 'mouse_all');
     
     canvas2d.animation_loop.add_on_update(function(dt, elapsed) {
         if (canvas2d.canvas.width != canvas2d.canvas.clientWidth * canvas2d.pixel_ratio || canvas2d.canvas.height != canvas2d.canvas.clientHeight * canvas2d.pixel_ratio) {
             canvas2d.canvas.width = canvas2d.canvas.clientWidth * canvas2d.pixel_ratio;
             canvas2d.canvas.height = canvas2d.canvas.clientHeight * canvas2d.pixel_ratio;
         }
-        canvas2d.plane.update(dt, elapsed);
         canvas2d.context.clearRect(0, 0, canvas2d.canvas.width, canvas2d.canvas.height);
         for (callback of canvas2d.draw_callbacks) {
             callback(dt, elapsed);
@@ -182,28 +177,28 @@ let format_grid_number = function(number) {
 
 Canvas2D.prototype.draw_grid = function() { let ctx = this.context;
     ctx.lineWidth = 1;
-    for (let x of this.plane.get_vertical_grids()) {
-        if (Math.abs(x) > this.plane.get_scale()*0.001) {
-            this.draw_line_plane(x, this.plane.get_min().y, x, this.plane.get_max().y);
+    for (let x of this.plane.vertical_grids) {
+        if (Math.abs(x) > this.plane.scale*0.001) {
+            this.draw_line_plane(x, this.plane.min.y, x, this.plane.max.y);
             this.draw_text_plane(format_grid_number(x), x, 0, 2, 2);
         }
     }
 
-    for (let y of this.plane.get_horizontal_grids()) {
-        if (Math.abs(y) > this.plane.get_scale()*0.001) {
-            this.draw_line_plane(this.plane.get_min().x, y, this.plane.get_max().x, y);
+    for (let y of this.plane.horizontal_grids) {
+        if (Math.abs(y) > this.plane.scale*0.001) {
+            this.draw_line_plane(this.plane.min.x, y, this.plane.max.x, y);
             this.draw_text_plane(format_grid_number(y), 0, y, 2, 2);
         }
     }
     
     ctx.lineWidth = 2;
-    let v = this.plane.get_min().x <= 0 && this.plane.get_max().x >= 0;
+    let v = this.plane.min.x <= 0 && this.plane.max.x >= 0;
     if (v) {
-        this.draw_line_plane(0, this.plane.get_min().y, 0, this.plane.get_max().y);
+        this.draw_line_plane(0, this.plane.min.y, 0, this.plane.max.y);
     }
-    let h = this.plane.get_min().y <= 0 && this.plane.get_max().y >= 0;
+    let h = this.plane.min.y <= 0 && this.plane.max.y >= 0;
     if (h) {
-        this.draw_line_plane(this.plane.get_min().x, 0, this.plane.get_max().x, 0);
+        this.draw_line_plane(this.plane.min.x, 0, this.plane.max.x, 0);
     }
     if (v && h) {
         this.draw_text_plane(0, 0, 0, 2, 2);

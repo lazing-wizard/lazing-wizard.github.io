@@ -1,7 +1,16 @@
 
-function ElementMouseObserver(element, ...args) { ElementObserverBase.call(this, element, ...args); this.create(); }
+function ElementMouseObserver(element, ...args) {
+    ElementObserverBase.call(this, element, ...args);
+    ElementMouseObserver.prototype.create.call(this, ...args);
+}
 ElementMouseObserver.prototype = Object.create(ElementObserverBase.prototype);
 ElementMouseObserver.prototype.constructor = ElementMouseObserver;
+
+create_static_data_descriptors(ElementMouseObserver, ElementObserverBase);
+
+
+
+// Implementation
 
 ElementMouseObserver.all_keyword = 'mouse_all';
 ElementMouseObserver.supported_event_types = [
@@ -12,9 +21,10 @@ ElementMouseObserver.supported_event_types = [
     'wheel'
 ];
 
-
-
-// Implementation
+ElementMouseObserver.instance_data_properties = ElementMouseObserver.supported_event_types.map((event_type) => {
+    return `${event_type}_listener`;
+});
+create_instance_data_descriptors(ElementMouseObserver);
 
 ElementMouseObserver.prototype.create = function() {}
 

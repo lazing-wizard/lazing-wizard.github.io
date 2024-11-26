@@ -4,7 +4,11 @@
 // Invoked functions are names of the event with custom prependings to them
 // Size event function is called 'onresize' and accepts single argument
 
-function ElementObserver(element, ...args) { this.create(element, ...args); }
+function ElementObserver(...args) { this.create(...args); }
+
+ElementObserver.static_data_properties = ['handler_types', 'supported_events'];
+create_static_data_descriptors(ElementObserver);
+
 
 ElementObserver.handler_types = [
     ElementResizeObserver,
@@ -13,19 +17,23 @@ ElementObserver.handler_types = [
     ElementTouchObserver,
     ElementPointerObserver
 ];
-Object.defineProperty(ElementObserver.prototype, 'handler_types', {
-    get() { return this.constructor.handler_types; }
-});
 
 ElementObserver.supported_events = ElementObserver.handler_types.reduce(
     (accumulated, handler) => array_union(accumulated, handler.supported_event_types), 
     []
 );
 
-ElementObserver.prototype.create = function() {
+
+
+// Implementation
+
+ElementObserver.instance_data_properties = ['handlers'];
+create_instance_data_descriptors(ElementObserver);
+
+ElementObserver.prototype.create = function(...args) {
     this.handlers = [];
     this.handler_types.forEach(handler => {
-        this.handlers.push(new handler());
+        this.handlers.push(new handler(...args));
     });
 }
 

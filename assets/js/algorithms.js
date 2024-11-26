@@ -1,14 +1,20 @@
 
-// In place array modifying functions
+// In place array modifiers
 
 function append_unique_to(target, ...elements) {
-    const unique_elements = elements.filter((new_element) => !target.find((existing_element) => existing_element === new_element));
-    target.push(...unique_elements);
+    for (const new_element of elements) {
+        if (!target.includes(new_element)) {
+            target.push(new_element);
+        }
+    }
 }
 
 function append_unique_to_begin(target, ...elements) {
-    const unique_elements = elements.filter((new_element) => !target.find((existing_element) => existing_element === new_element));
-    target.unshift(...unique_elements);
+    for (const new_element of elements) {
+        if (!target.includes(new_element)) {
+            target.unshift(new_element);
+        }
+    }
 }
 
 function remove_elements_from(target, ...elements) {
@@ -47,7 +53,6 @@ function array_subtraction(target1, target2) {
 function array_complement(target1, target2) {
     return target2.filter((element) => !array_contains(target1, element));
 }
-
 
 
 function reduce_arrays(...elements) {

@@ -1,7 +1,7 @@
 
 // "Plane2D" class manages logic of tying 2D coordinate system with scaling and repositioning to view rectangle
 
-function Plane2D() { this.create(); }
+function Plane2D(...args) { this.create(...args); }
 
 // Convert x,y coordinates from plane to view
 Plane2D.prototype.to_view = Plane2D.prototype.from_plane = Plane2D.prototype.plane_to_view = function(...args) {
@@ -22,7 +22,7 @@ Plane2D.prototype.resize_view = function(new_width, new_height) {
 }
 // Call when need to move plane in direction of (x, y)
 // (x, y) are in view coordinate space
-// When DPR differs values have to be multiplied by the ratio 
+// When DPR differs values have to be multiplied by the ratio
 Plane2D.prototype.move_for = function(dx, dy) {
     this.center.x -= dx*this.size.x/this.view_size.x;
     this.center.y += dy*this.size.y/this.view_size.y;
@@ -65,18 +65,18 @@ Plane2D.prototype.init_view = function(width, height) {
     return this;
 }
 
-Plane2D.prototype.update = function() {}
-
 
 
 // Implementation
 
-Plane2D.data_members = ['view_size', 'view_aspect', 'center', 'scale', 'scale_base',
-                        'scale_power', 'span', 'span_base', 'min', 'max', 'size',
-                        'm_plane_to_view', 'm_view_to_plane',
-                        'grid_step', 'vertical_grids', 'horizontal_grids', 'grid_scale_count'];
+Plane2D.instance_data_properties = ['view_size', 'view_aspect', 'center', 'scale', 'scale_base',
+                                    'scale_power', 'span', 'span_base', 'min', 'max', 'size',
+                                    'm_plane_to_view', 'm_view_to_plane',
+                                    'grid_step', 'vertical_grids', 'horizontal_grids', 'grid_scale_count'];
+create_instance_data_descriptors(Plane2D);
+
 // Values in this function exist only to declare variables
-Plane2D.prototype.create = function() {
+Plane2D.prototype.create = function(width, height) {
     // Size of the screen plane is plotted on
     this.view_size = {x: 1, y: 1};
     
@@ -110,8 +110,10 @@ Plane2D.prototype.create = function() {
     this.grid_scale_count = 1;
     this.vertical_grids = [];
     this.horizontal_grids = [];
-
-    this.init_view(1, 1);
+    if (width && height)
+        this.init_view(width, height);
+    else
+        this.init_view(1, 1);
 }
 
 Plane2D.prototype.calculate_view = function(width, height) {
@@ -273,6 +275,3 @@ Plane2D.prototype.translate = function(m, ...args) {
     }
      throw new Error('Wrong vector translation');
 }
-
-// Getters and setters (for plane they need to address decorated plane members without plane.plane.)
-generate_accessors(Plane2D);

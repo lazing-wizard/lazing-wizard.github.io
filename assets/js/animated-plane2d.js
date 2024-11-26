@@ -1,13 +1,32 @@
 
 // "AnimatedPlane2D" decorates Plane2D for smooth moving, and updates it when user requires depending on passed value
 
-function AnimatedPlane2D(plane) { this.create(plane); }
+function AnimatedPlane2D(plane, ...args) { this.create(plane, ...args); }
 
 AnimatedPlane2D.prototype.set_plane = function(plane) {
     if (!(plane instanceof Plane2D)) {
         throw new Error('Wrong AnimatedPlane2D plane');
     }
     this.plane = plane;
+    return this;
+}
+
+AnimatedPlane2D.prototype.set_animation_loop = function(animation_loop) {
+    if (this.animation_loop) {
+        this.animation_loop.remove_on_update(this.update);
+    }
+    if (!(animation_loop instanceof AnimationLoop)) {
+        throw new Error('Wrong AnimatedPlane2D animation_loop');
+    }
+    this.animation_loop = animation_loop;
+    this.animation_loop.add_on_update_begin(this.update.bind(this));
+    return this;
+}
+AnimatedPlane2D.prototype.detach_animation_loop = function() {
+    if (this.animation_loop) {
+        this.animation_loop.remove_on_update(this.update);
+        this.animation_loop = null;
+    }
     return this;
 }
 
@@ -26,6 +45,8 @@ AnimatedPlane2D.prototype.init_view = function(width, height) {
 AnimatedPlane2D.prototype.move_for = function(dx, dy) {
     this.move_accumulated.x += dx;
     this.move_accumulated.y += dy;
+
+    return this;
 }
 
 AnimatedPlane2D.prototype.scale_at = function(view_x, view_y, scale) {
@@ -35,10 +56,12 @@ AnimatedPlane2D.prototype.scale_at = function(view_x, view_y, scale) {
     if (Math.sign(this.scale_power_accumulated) != Math.sign(scale))
         this.scale_power_accumulated = 0;
     this.scale_power_accumulated += scale;
+
+    return this;
 }
 
 AnimatedPlane2D.prototype.scale_between = function(view_x0, view_y0, view_x1, view_y1, scale) {
-    
+    return this;
 }
 
 AnimatedPlane2D.prototype.update = function(dt, elapsed) {
@@ -118,15 +141,24 @@ AnimatedPlane2D.prototype.adjust_scale = function(dt) {
     this.scale_power_accumulated *= 1 - ratio;
 }
 
-AnimatedPlane2D.data_members = ['move_accumulated', 'move_deffered', 'scale_point', 'scale_power_accumulated'];
-AnimatedPlane2D.prototype.create = function(plane) {
+AnimatedPlane2D.instance_data_properties = ['move_accumulated', 'move_deffered',
+                                            'scale_point', 'scale_power_accumulated'];
+create_instance_data_descriptors(AnimatedPlane2D);
+
+AnimatedPlane2D.prototype.create = function(plane, animation_loop, ...args) {
     if (plane) {
         this.set_plane(plane);
+        this.init_view(plane.view_size.x, plane.view_size.y);
     } else {
-        this.plane = new Plane2D();
+        this.set_plane(new Plane2D(...args));
         this.init_view(1, 1); /// init_view gets called 2 times
+    }
+    if (animation_loop) {
+        this.set_animation_loop(animation_loop);
+    } else {
+        this.set_animation_loop(new AnimationLoop());
+        this.animation_loop.start();
     }
 }
 
-delegate_undefined_methods(AnimatedPlane2D, Plane2D, 'plane');
-generate_accessors(AnimatedPlane2D);
+delegate_undefined_descriptors(AnimatedPlane2D, Plane2D, 'plane');

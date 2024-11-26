@@ -1,14 +1,26 @@
 
-function ElementTouchObserver(element, ...args) { ElementObserverBase.call(this, element, ...args); this.create(); }
+function ElementTouchObserver(element, ...args) {
+    ElementObserverBase.call(this, element, ...args);
+    ElementTouchObserver.prototype.create.call(this);
+}
 ElementTouchObserver.prototype = Object.create(ElementObserverBase.prototype);
 ElementTouchObserver.prototype.constructor = ElementTouchObserver;
+
+create_static_data_descriptors(ElementTouchObserver, ElementObserverBase);
+
+
+
+// Implementation
 
 ElementTouchObserver.all_keyword = 'touch_all';
 ElementTouchObserver.supported_event_types = [
     'touchstart', 'touchend', 'touchmove', 'touchcancel'
 ];
 
-// Implementation
+ElementTouchObserver.instance_data_properties = ElementTouchObserver.supported_event_types.map((event_type) => {
+    return `${event_type}_listener`;
+});
+create_instance_data_descriptors(ElementTouchObserver);
 
 ElementTouchObserver.prototype.create = function() {}
 

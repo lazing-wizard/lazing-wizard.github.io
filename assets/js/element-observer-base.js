@@ -1,16 +1,11 @@
 
 // Common for observers of size, mouse and touch events
 
-function ElementObserverBase(element, ...args) { ElementObserverBase.prototype.create.call(this, element, ...args); }
+function ElementObserverBase(...args) { ElementObserverBase.prototype.create.call(this,...args); }
 
-ElementObserverBase.all_keyword = '';
-Object.defineProperty(ElementObserverBase.prototype, 'all_keyword', {
-    get() { return this.constructor.all_keyword; }
-});
-ElementObserverBase.supported_event_types = [];
-Object.defineProperty(ElementObserverBase.prototype, 'supported_event_types', {
-    get() { return this.constructor.supported_event_types; }
-});
+ElementObserverBase.static_data_properties = ['all_keyword', 'supported_event_types'];
+create_static_data_descriptors(ElementObserverBase);
+
 
 // Appends objects that will have callbacks called
 ElementObserverBase.prototype.add_delegate = ElementObserverBase.prototype.add_delegates = function(...delegates) {
@@ -29,7 +24,7 @@ ElementObserverBase.prototype.remove_delegate = ElementObserverBase.prototype.re
     remove_elements_from(this.delegates, ...reduce_arrays(delegates));
     return this;
 }
-ElementObserverBase.prototype.clear_delegates = ElementObserverBase.prototype.clear_delegates = function() {
+ElementObserverBase.prototype.clear_delegate = ElementObserverBase.prototype.clear_delegates = function() {
     this.delegates.length = 0;
     return this;
 }
@@ -38,6 +33,7 @@ ElementObserverBase.prototype.clear_delegates = ElementObserverBase.prototype.cl
 // If 'all' 'all_events' is passed then all events will be binded
 // If 'mouse_all/touch_all/resize_all/keyboard_all/pointer_all' passed related events are binded
 ElementObserverBase.prototype.add_event = ElementObserverBase.prototype.add_events = function(...events) {
+    events = reduce_arrays(events);
     if (events.includes(this.all_keyword) || events.includes('all')) 
         events = this.supported_event_types;
     events = array_intersection(reduce_arrays(events), this.supported_event_types);
@@ -51,6 +47,7 @@ ElementObserverBase.prototype.add_event = ElementObserverBase.prototype.add_even
     return this;
 }
 ElementObserverBase.prototype.remove_event = ElementObserverBase.prototype.remove_events = function(...events) {
+    events = reduce_arrays(events);
     if (events.includes(this.all_keyword) || events.includes('all')) 
         events = this.supported_event_types;
     events = array_intersection(reduce_arrays(events), this.supported_event_types);
@@ -64,13 +61,13 @@ ElementObserverBase.prototype.remove_event = ElementObserverBase.prototype.remov
     return this;
 }
 ElementObserverBase.prototype.set_event = ElementObserverBase.prototype.set_events = function(...events) {
+    events = reduce_arrays(events);
     const detached_events = array_subtraction(this.attached_events, reduce_arrays(events));
     const attached_events = array_subtraction(reduce_arrays(events), this.attached_events);
     this.remove_events(...detached_events);
     this.add_events(...attached_events);
     return this;
 }
-
 ElementObserverBase.prototype.clear_events = ElementObserverBase.prototype.clear_events = function() {
     this.attached_events.forEach((event) => {
         this.detach_listener(event);
@@ -127,6 +124,12 @@ ElementObserverBase.prototype.clear = function() {
 
 // Implementation
 
+ElementObserverBase.all_keyword = '';
+ElementObserverBase.supported_event_types = [];
+
+ElementObserverBase.instance_data_properties = ['element', 'delegates', 'attached_events', 'prefix', 'postfix'];
+create_instance_data_descriptors(ElementObserverBase);
+
 ElementObserverBase.prototype.create = function(element, ...args) {
     this.element = null;
     this.delegates = [];
@@ -136,6 +139,8 @@ ElementObserverBase.prototype.create = function(element, ...args) {
     this.prefix = 'on';
     this.postfix = '';
 
+    //console.log(this);
+    //this.contructor.supported_event_types
     this.supported_event_types.forEach((event_type) => {
         this[`${event_type}_listener`] = null;
     });
@@ -157,5 +162,5 @@ ElementObserverBase.prototype.detach_listeners = function() {
 }
 
 // Correct state of subscriptions is guaranteed for these functions, no checks needed in them
-ElementObserverBase.prototype.attach_listener = function(event) { throw new Error('Not implemented'); }
-ElementObserverBase.prototype.detach_listener = function(event) { throw new Error('Not implemented'); }
+ElementObserverBase.prototype.attach_listener = function() { throw new Error('Not implemented'); }
+ElementObserverBase.prototype.detach_listener = function() { throw new Error('Not implemented'); }

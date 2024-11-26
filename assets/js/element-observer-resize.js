@@ -1,22 +1,24 @@
 
-function ElementResizeObserver(element, ...args) { ElementObserverBase.call(this, element, ...args); this.create(); }
+function ElementResizeObserver(...args) {
+    ElementObserverBase.call(this, ...args);
+    ElementResizeObserver.prototype.create.call(this);
+}
 ElementResizeObserver.prototype = Object.create(ElementObserverBase.prototype);
 ElementResizeObserver.prototype.constructor = ElementResizeObserver;
 
-ElementResizeObserver.all_keyword = 'resize_all';
-ElementResizeObserver.supported_event_types = ['resize'];
+create_static_data_descriptors(ElementResizeObserver, ElementObserverBase);
 
 
 
 // Implementation
 
-ElementResizeObserver.prototype.attach_listener = function() {
-    this.resize_listener.observe(this.element);
-}
+ElementResizeObserver.all_keyword = 'resize_all';
+ElementResizeObserver.supported_event_types = ['resize'];
 
-ElementResizeObserver.prototype.detach_listener = function() {
-    this.resize_listener.unobserve(this.element);
-}
+ElementResizeObserver.instance_data_properties = ElementResizeObserver.supported_event_types.map((event_type) => {
+    return `${event_type}_listener`;
+});
+create_instance_data_descriptors(ElementResizeObserver);
 
 ElementResizeObserver.prototype.create = function() {
     this.resize_listener = new ResizeObserver(function(entries) {
@@ -27,4 +29,12 @@ ElementResizeObserver.prototype.create = function() {
                 delegate[method](entries[entries.length - 1]);
         });
     }.bind(this));
+}
+
+ElementResizeObserver.prototype.attach_listener = function() {
+    this.resize_listener.observe(this.element);
+}
+
+ElementResizeObserver.prototype.detach_listener = function() {
+    this.resize_listener.unobserve(this.element);
 }

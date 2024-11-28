@@ -33,7 +33,7 @@ ElementTouchObserver.prototype.attach_listener = function(event_type) {
             }
         });
     }
-    this.element.addEventListener(event_type, this[`${event_type}_listener`]);
+    this.element.addEventListener(event_type, this[`${event_type}_listener`], {passive: false});
 }
 
 ElementTouchObserver.prototype.detach_listener = function(event) {

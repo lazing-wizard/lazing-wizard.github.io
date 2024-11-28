@@ -69,3 +69,7 @@ function reduce_arrays(...elements) {
     _reduce_arrays(out, ...elements);
     return out;
 }
+
+function clamp(v, min, max) {
+    return Math.min(Math.max(v, min), max);
+}

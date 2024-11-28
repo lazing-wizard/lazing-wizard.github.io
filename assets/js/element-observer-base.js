@@ -138,9 +138,7 @@ ElementObserverBase.prototype.create = function(element, ...args) {
 
     this.prefix = 'on';
     this.postfix = '';
-
-    //console.log(this);
-    //this.contructor.supported_event_types
+    
     this.supported_event_types.forEach((event_type) => {
         this[`${event_type}_listener`] = null;
     });

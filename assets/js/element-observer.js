@@ -6,7 +6,7 @@
 
 function ElementObserver(...args) { this.create(...args); }
 
-ElementObserver.static_data_properties = ['handler_types', 'supported_events'];
+ElementObserver.static_data_properties = ['handler_types', 'supported_event_types'];
 create_static_data_descriptors(ElementObserver);
 
 
@@ -18,7 +18,7 @@ ElementObserver.handler_types = [
     ElementPointerObserver
 ];
 
-ElementObserver.supported_events = ElementObserver.handler_types.reduce(
+ElementObserver.supported_event_types = ElementObserver.handler_types.reduce(
     (accumulated, handler) => array_union(accumulated, handler.supported_event_types), 
     []
 );

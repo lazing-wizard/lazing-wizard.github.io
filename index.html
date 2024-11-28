@@ -71,8 +71,11 @@
             let canvas = document.getElementById('canvas2d');
             let canvas2d = new Canvas2D(canvas);
             let draw = function(dt, elapsed) {
-                canvas2d.draw_line_plane(1, 2, 4, 2);
-                canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5);
+                canvas2d.draw_line_plane(1, 2, 4, 2, {color:'#008F00', thickness:3});
+                canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5, {color:'#008F00', thickness:3});
+                canvas2d.draw_point_plane(-2, 2, {color: '#9F0000', thickness: 6});
+                canvas2d.draw_point_plane(-2, 1.23, {color: '#0000AF', thickness: 6});
+                canvas2d.draw_point_plane(-1, -1, {color: '#3F00AF', thickness: 10});
             }
             canvas2d.add_draw(draw);
         }

@@ -27,7 +27,8 @@ function create_static_data_descriptors(target_class, parent_class) {
         target_class.static_data_properties = [];
     for (const property of inherited_properties) {
         target_class.static_data_properties.push(property);
-        target_class['_' + property] = parent_class['_' + property];
+        /// Do copy
+        target_class['_' + property] = JSON.parse(JSON.stringify(parent_class['_' + property]));
         Object.defineProperty(target_class.prototype, property, {
             get() { return target_class['_' + property]; },
             set(v) { target_class['_' + property] = v; }

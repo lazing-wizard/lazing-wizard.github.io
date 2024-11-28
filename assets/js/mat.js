@@ -4,48 +4,87 @@
 // Vectors are represented vertically
 // Transfromation vectors in matrix are represented vertically
 
-/// Ineffective because of memory allocation and needs optimizing
-
-function Mat(...args) {
-    this.height = args[0];
-    this.width = args[1];
-    this.data = args.slice(2);
+function Mat(height, width, ...data) {
+    this.height = height;
+    this.width = width;
+    if (data.length == 0) {
+        this.data = new Array(this.height * this.width);
+    } else if (data.length == this.height * this.width) {
+        this.data = data;
+    } else {
+        throw new Error('Incorrect number of arguments for Mat data');
+    }
 }
 
-function mat(...args) {
-    return new Mat(...args);
+Mat.buffers = {
+    common: new Array(26),
+    get: function(n) {
+        if (n <= 25) {
+            return this[n];
+        } else {
+            if (n > this.common.length) {
+                this.common = new Array(n);
+            }
+            return this.common;
+        }
+    }
 }
-function vec1(...args) {
-    if (args.length != 1) throw new Error('Incorrect values for vec1');
-    return mat(1, 1, ...args);
+for (let i = 0; i <= 25; ++i) {
+    Mat.buffers[i] = new Array(i);
 }
-function vec2(...args) {
-    if (args.length != 2) throw new Error('Incorrect values for vec2');
-    return mat(2, 1, ...args);
+
+function mat(height, width, ...data) {
+    return new Mat(height, width, ...data);
 }
-function vec3(...args) {
-    if (args.length != 3) throw new Error('Incorrect values for vec3');
-    return mat(3, 1, ...args);
+function vec1() {
+    if (arguments.length && arguments.length != 1) throw new Error('Incorrect values for vec1');
+    return mat(1, 1, ...arguments);
 }
-function vec4(...args) {
-    if (args.length != 4) throw new Error('Incorrect values for vec4');
-    return mat(4, 1, ...args);
+function vec2() {
+    if (arguments.length && arguments.length != 2) throw new Error('Incorrect values for vec2');
+    return mat(2, 1, ...arguments);
 }
-function mat1(...args) {
-    if (args.length != 1) throw new Error('Incorrect values for mat1');
-    return mat(1, 1, ...args);
+function vec3() {
+    if (arguments.length && arguments.length != 3) throw new Error('Incorrect values for vec3');
+    return mat(3, 1, ...arguments);
 }
-function mat2(...args) {
-    if (args.length != 4) throw new Error('Incorrect values for mat2');
-    return mat(2, 2, ...args);
+function vec4() {
+    if (arguments.length && arguments.length != 4) throw new Error('Incorrect values for vec4');
+    return mat(4, 1, ...arguments);
 }
-function mat3(...args) {
-    if (args.length != 9) throw new Error('Incorrect values for mat3');
-    return mat(3, 3, ...args);
+function vec5() {
+    if (arguments.length && arguments.length != 5) throw new Error('Incorrect values for vec5');
+    return mat(5, 1, ...arguments);
 }
-function mat4(...args) {
-    if (args.length != 16) throw new Error('Incorrect values for mat4');
-    return mat(4, 4, ...args);
+function mat1() {
+    if (arguments.length && arguments.length != 1) throw new Error('Incorrect values for mat1');
+    return mat(1, 1, ...arguments);
+}
+function mat2() {
+    if (arguments.length && arguments.length != 4) throw new Error('Incorrect values for mat2');
+    return mat(2, 2, ...arguments);
+}
+function mat3() {
+    if (arguments.length && arguments.length != 9) throw new Error('Incorrect values for mat3');
+    return mat(3, 3, ...arguments);
+}
+function mat4() {
+    if (arguments.length && arguments.length != 16) throw new Error('Incorrect values for mat4');
+    return mat(4, 4, ...arguments);
+}
+function mat5() {
+    if (arguments.length && arguments.length != 25) throw new Error('Incorrect values for mat5');
+    return mat(5, 5, ...arguments);
+}
+
+Mat.prototype.assign = function() {
+    if (arguments.length != this.data.length) {
+        throw new Error('Incorrect number of arguments for Mat assign');
+    }
+    for (let i = 0; i < arguments.length; ++i) {
+        this.data[i] = arguments[i];
+    }
+    return this;
 }
 
 Mat.prototype.get = function(i, j) {
@@ -59,153 +98,299 @@ Mat.prototype.set = function(i, j, v) {
     this.data[i * this.width + j] = v;
     return this;
 }
-Mat.prototype.x = function(arg) {
-    if (this.width != 1) throw new Error('Calling x() on non vector');
-    if (this.height < 1) throw new Error('Not high enough dimension for x()');
-    if (arg) {
-        this.data[0] = arg;
-        return this;
-    } else {
+Object.defineProperty(Mat.prototype, 'x', {
+    get() {
+        if (this.width != 1) throw new Error('Calling x() on non vector');
+        if (this.height < 1) throw new Error('Not high enough dimension for x()');
         return this.data[0];
+    },
+    set(v) {
+        if (this.width != 1) throw new Error('Calling x() on non vector');
+        if (this.height < 1) throw new Error('Not high enough dimension for x()');
+        this.data[0] = v;
     }
-}
-Mat.prototype.y = function(arg) {
-    if (this.width != 1) throw new Error('Calling y() on non vector');
-    if (this.height < 2) throw new Error('Not high enough dimension for y()');
-    if (arg) {
-        this.data[1] = arg;
-        return this;
-    } else {
+});
+Object.defineProperty(Mat.prototype, 'y', {
+    get() {
+        if (this.width != 1) throw new Error('Calling y() on non vector');
+        if (this.height < 2) throw new Error('Not high enough dimension for y()');
         return this.data[1];
+    },
+    set(v) {
+        if (this.width != 1) throw new Error('Calling y() on non vector');
+        if (this.height < 2) throw new Error('Not high enough dimension for y()');
+        this.data[1] = v;
     }
-}
-Mat.prototype.z = function(arg) {
-    if (this.width != 1) throw new Error('Calling z() on non vector');
-    if (this.height < 3) throw new Error('Not high enough dimension for z()');
-    if (arg) {
-        this.data[2] = arg;
-        return this;
-    } else {
+});
+Object.defineProperty(Mat.prototype, 'z', {
+    get() {
+        if (this.width != 1) throw new Error('Calling z() on non vector');
+        if (this.height < 3) throw new Error('Not high enough dimension for z()');
         return this.data[2];
+    },
+    set(v) {
+        if (this.width != 1) throw new Error('Calling z() on non vector');
+        if (this.height < 3) throw new Error('Not high enough dimension for z()');
+        this.data[2] = v;
     }
-}
-Mat.prototype.w = function(arg) {
-    if (this.width != 1) throw new Error('Calling w() on non vector');
-    if (this.height < 4) throw new Error('Not high enough dimension for w()');
-    if (arg) {
-        this.data[3] = arg;
-        return this;
-    } else {
+});
+Object.defineProperty(Mat.prototype, 'w', {
+    get() {
+        if (this.width != 1) throw new Error('Calling w() on non vector');
+        if (this.height < 4) throw new Error('Not high enough dimension for w()');
         return this.data[3];
+    },
+    set(v) {
+        if (this.width != 1) throw new Error('Calling w() on non vector');
+        if (this.height < 4) throw new Error('Not high enough dimension for w()');
+        this.data[3] = v;
+    }
+});
+
+Mat.prototype.chose_reusable_space = function(reused, height, width) {
+    if (reused instanceof Mat) {
+        if (reused.height * reused.width == height * width) {
+            reused.height = height;
+            reused.width = width;
+            return reused;
+        } else {
+            throw new Error('Incorrect size for reused space for mat');
+        }
+    } else if (reused === undefined) {
+        return new Mat(height, width);
+    } else {
+        throw new Error('Incorrect type for reused space for mat');
     }
 }
 
-Mat.prototype.add_number = function(n) {
-    var temp = new Array(this.height * this.width);
-    for (var i = 0; i < this.data.length; ++i) {
-        temp[i] = this.data[i] + n;
+Mat.prototype.add_number = function(n, reused) {
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    for (let i = 0; i < this.data.length; ++i) {
+        result.data[i] = this.data[i] + n;
     }
-    return new Mat(this.height, this.width, ...temp);
+    return result;
 }
-Mat.prototype.add = function(m) {
+Mat.prototype.add_number_inplace = function(n) {
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] += n;
+    }
+    return this;
+}
+Mat.prototype.add = function(m, reused) {
     if (!(m instanceof Mat)) {
-        return this.add_number(m);
+        return this.add_number(m, reused);
+    }
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    if (this.width != m.width || this.height != m.height) {
+        throw new Error('Incorrect size for mat addition');
+    }
+    for (let i = 0; i < this.data.length; ++i) {
+        result.data[i] = this.data[i] + m.data[i];
+    }
+    return result;
+}
+Mat.prototype.add_inplace = function(m) {
+    if (!(m instanceof Mat)) {
+        return this.add_number_inplace(m);
     }
     if (this.width != m.width || this.height != m.height) {
         throw new Error('Incorrect size for mat addition');
     }
-    var temp = new Array(this.height * this.width);
-    for (var i = 0; i < this.data.length; ++i) {
-        temp[i] = this.data[i] + m.data[i];
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] += m.data[i];
     }
-    return new Mat(this.height, this.width, ...temp);
+    return this;
 }
 
-Mat.prototype.sub_number = function(n) {
-    var temp = new Array(this.height * this.width);
-    for (var i = 0; i < this.data.length; ++i) {
-        temp[i] = this.data[i] - n;
+Mat.prototype.sub_number = function(n, reused) {
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    for (let i = 0; i < this.data.length; ++i) {
+        result.data[i] = this.data[i] - n;
     }
-    return new Mat(this.height, this.width, ...temp);
+    return result;
 }
-Mat.prototype.sub = function(m) {
+Mat.prototype.sub_number_inplace = function(n) {
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] -= n;
+    }
+    return this;
+}
+Mat.prototype.sub = function(m, reused) {
     if (!(m instanceof Mat)) {
-        return this.sub_number(m);
+        return this.sub_number(m, reused);
+    }
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    if (this.width != m.width || this.height != m.height) {
+        throw new Error('Incorrect size for mat subtraction');
+    }
+    for (let i = 0; i < this.data.length; ++i) {
+        result.data[i] = this.data[i] - m.data[i];
+    }
+    return result;
+}
+Mat.prototype.sub_inplace = function(m) {
+    if (!(m instanceof Mat)) {
+        return this.sub_number_inplace(m);
     }
     if (this.width != m.width || this.height != m.height) {
         throw new Error('Incorrect size for mat subtraction');
     }
-    var temp = new Array(this.height * this.width);
-    for (var i = 0; i < this.data.length; ++i) {
-        temp[i] = this.data[i] - m.data[i];
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] -= m.data[i];
     }
-    return new Mat(this.height, this.width, ...temp);
+    return this;
 }
-Mat.prototype.mul_number = function(n) {
-    var temp = new Array(this.height * this.width);
-    for (var i = 0; i < this.data.length; ++i) {
-        temp[i] = this.data[i] * n;
+
+Mat.prototype.mul_number = function(n, reused) {
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    for (let i = 0; i < this.data.length; ++i) {
+        result.data[i] = this.data[i] * n;
     }
-    return new Mat(this.height, this.width, ...temp);
+    return result;
+}
+Mat.prototype.mul_number_inplace = function(n) {
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] *= n;
+    }
+    return this;
 }
 // Matrix multiplication for "m" on the left, and "this" on the right
-Mat.prototype.mul = function(m) {
+Mat.prototype.mul = function(m, reused) {
     if (!(m instanceof Mat)) {
-        return this.mul_number(m);
+        return this.mul_number(m, reused);
+    }
+    if (this.height != m.width) {
+        throw new Error('Incorrect size for mat multiplication');
+    }
+    const new_height = m.height;
+    const new_width = this.width;
+    let result = this.chose_reusable_space(reused, new_height, new_width);
+    let target;
+    if (result === this) {
+        target = Mat.buffers.get(new_height * new_width);
+    } else {
+        target = result.data;
+    }
+    for (let i = 0; i < new_height; ++i) {
+        for (let j = 0; j < new_width; ++j) {
+            let sum = 0;
+            for (let x = 0; x < m.width; ++x) {
+                sum += m.data[m.width*i + x] * this.data[x * this.width + j];
+            }
+            target[new_width*i + j] = sum;
+        }
+    }
+    if (result === this) {
+        const result_data = result.data;
+        for (let i = 0; i < result_data.length; ++i) {
+            result_data[i] = target[i];
+        }
+    }
+    return result;
+}
+Mat.prototype.mul_inplace = function(m) {
+    if (!(m instanceof Mat)) {
+        return this.mul_number_inplace(m);
     }
     if (this.height != m.width) {
         throw new Error('Incorrect size for mat multiplication');
     }
     
-    var new_width = this.width;
-    var new_height = m.height;
-    var temp = new Array(new_width * new_height);
-            
-    for (var i = 0; i < new_height; i++) {
-        for (var j = 0; j < new_width; j++) {
-            temp[i*new_width + j] = 0;
-            for (var x = 0; x < m.width; x++) {
-                temp[i*new_width + j] += m.data[i*m.width + x] * this.data[x*this.width + j];
-            } 
-        } 
+    const new_height = m.height;
+    const new_width = this.width;
+    
+    let target = Mat.buffers.get(new_height * new_width);
+    for (let i = 0; i < new_height; ++i) {
+        for (let j = 0; j < new_width; ++j) {
+            let sum = 0;
+            for (let x = 0; x < m.width; ++x) {
+                sum += m.data[i*m.width + x] * this.data[x*this.width + j];
+            }
+            target[i*new_width + j] = sum;
+        }
     }
-    return new Mat(new_height, new_width, ...temp);
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] = target[i];
+    }
+    return this;
 }
 
 // Columnwise normalization
-Mat.prototype.normalize = function() {
-    var temp = new Array(this.width * this.height);
-    for (var j = 0; j < this.width; ++j) {
-        var sum = 0;
-        for (var i = 0; i < this.height; ++i) {
-            sum += Math.pow(this.data[this.width*i + j], 2);
+Mat.prototype.normalize = function(reused) {
+    let result = this.chose_reusable_space(reused, this.height, this.width);
+    for (let j = 0; j < this.width; ++j) {
+        let sum = 0;
+        for (let i = 0; i < this.height; ++i) {
+            sum += this.data[this.width*i + j] * this.data[this.width*i + j];
         }
         sum = Math.sqrt(sum);
-        for (var i = 0; i < this.height; ++i) {
-            temp[this.width*i + j] = this.data[this.width*i + j] / sum;
+        for (let i = 0; i < this.height; ++i) {
+            result.data[this.width*i + j] = this.data[this.width*i + j] / sum;
         }
     }
-    return new Mat(this.height, this.width, ...temp);
+    return result;
 }
-Mat.prototype.transpose = function() {
-    var temp = new Array(this.width * this.height);
-    for (var j = 0; j < this.width; ++j) {
-        for (var i = 0; i < this.height; ++i) {
-            temp[this.width*i + j] = this.data[this.width*j + i];
+Mat.prototype.normalize_inplace = function() {
+    for (let j = 0; j < this.width; ++j) {
+        let sum = 0;
+        for (let i = 0; i < this.height; ++i) {
+            sum += this.data[this.width*i + j] * this.data[this.width*i + j];
+        }
+        sum = Math.sqrt(sum);
+        for (let i = 0; i < this.height; ++i) {
+            this.data[this.width*i + j] /= sum;
         }
     }
-    return new Mat(this.width, this.height, ...temp);
+    return this;
+}
+Mat.prototype.transpose = function(reused) {
+    let result = this.chose_reusable_space(reused, this.width, this.height);
+    let buffer = Mat.buffers.get(this.height * this.width);
+    for (let i = 0; i < this.height; ++i) {
+        for (let j = 0; j < this.width; ++j) {
+            buffer[this.height*j + i] = this.data[this.width*i + j];
+        }
+    }
+    for (let i = 0; i < result.data.length; ++i) {
+        result.data[i] = buffer[i];
+    }
+    return result;
+}
+Mat.prototype.transpose_inplace = function() {
+    if (this.width !== this.height) {
+        let buffer = Mat.buffers.get(this.height * this.width);
+        for (let i = 0; i < this.height; ++i) {
+            for (let j = 0; j < this.width; ++j) {
+                buffer[this.height*j + i] = this.data[this.width*i + j];
+            }
+        }
+        for (let i = 0; i < this.data.length; ++i) {
+            this.data[i] = buffer[i];
+        }
+        [this.width, this.height] = [this.height, this.width];
+    } else {
+        for (let i = 0; i < this.height; ++i) {
+            for (let j = i + 1; j < this.width; ++j) {
+                let temp = this.data[this.width*i + j];
+                this.data[this.width*i + j] = this.data[this.width*j + i];
+                this.data[this.width*j + i] = temp;
+            }
+        }
+    }
+    return this;
 }
 Mat.prototype.dot = function(v) {
     if (this.width != 1 || v.width != 1) throw new Error('Trying to dot multiply matrix');
     if (this.height != v.height) throw new Error('Trying to dot multiply vectors of different dimensions');
     let value = 0;
-    for (var i = 0; i < this.height; ++i)
+    for (let i = 0; i < this.height; ++i)
         value += this.data[i] * v.data[i];
     return value;
 }
 // Returns vector of this projected on v
-Mat.prototype.project = function(v) {
+Mat.prototype.project = function(v, reused) {
+    if (this.width != 1 || v.width != 1) throw new Error('Trying to project non-vector');
+    if (this.height != v.height) throw new Error('Trying to project vectors of different dimensions');
     //let dir = v;
     //v = this;
     //let m = mat2(dir.x()*dir.x(), dir.x()*dir.y(),
@@ -216,11 +401,19 @@ Mat.prototype.project = function(v) {
     //              0.0,     dir.y());
     //m = m2.mul(m1);
     //return v.mul(m).mul(1/pow(dir.length(), 2));
-    return v.mul(this.dot(v)/v.dot(v));
+    return v.mul_number(this.dot(v)/v.dot(v), reused);
+}
+Mat.prototype.project_inplace = function(v) {
+    if (this.width != 1 || v.width != 1) throw new Error('Trying to project non-vector');
+    if (this.height != v.height) throw new Error('Trying to project vectors of different dimensions');
+    return this.mul_number_inplace(this.dot(v)/v.dot(v));
 }
 // Returns vector of this rotated in direction of v 
-Mat.prototype.align = function(v) {
-    return v.mul(this.length()/v.length());
+Mat.prototype.align = function(v, reused) {
+    return v.mul_number(this.length()/v.length(), reused);
+}
+Mat.prototype.align_inplace = function(v) {
+    return this.mul_number_inplace(this.length()/v.length());
 }
 Mat.prototype.length = function() {
     if (this.width != 1) throw new Error('Trying to get length of non vector');
@@ -229,11 +422,17 @@ Mat.prototype.length = function() {
         value += this.data[i] * this.data[i];
     return Math.sqrt(value);
 }
-// Vertical dimension
-Mat.prototype.vdim = function() {
-    return this.height;
-}
-// Horizontal dimension
-Mat.prototype.hdim = function() {
-    return this.width;
-}
+Object.defineProperty(Mat.prototype, 'dim', {
+    get() {
+        if (this.height == 1 || this.width == this.height)
+            return this.width;
+        else
+            throw new Error('Vector and nonsquare matrix needs to be specified');
+    }
+});
+Object.defineProperty(Mat.prototype, 'dim_v', {
+    get() { return this.height; }
+});
+Object.defineProperty(Mat.prototype, 'dim_h', {
+    get() { return this.width[1]; }
+});

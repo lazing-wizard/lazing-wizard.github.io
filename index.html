@@ -30,55 +30,22 @@
         }
     </style>
 </head>
-<body onload="main()">
+<body>
     <canvas id="canvas2d">
         Please use a browser that supports "canvas"
     </canvas>
-
-    <script id="script_loader">
-        const script_names = ['algorithms.js',
-                              'prototype-mods.js',
-                              'mat.js',
-                              'plane2d.js',
-                              'animated-plane2d.js',
-                              'element-observer-base.js',
-                              'element-observer-resize.js',
-                              'element-observer-mouse.js',
-                              'element-observer-keyboard.js',
-                              'element-observer-touch.js',
-                              'element-observer-pointer.js',
-                              'element-observer.js',
-                              'animation-loop.js',
-                              'canvas2d.js'];
-        const first_script = document.getElementById('script_loader');
-        let current_script = first_script;
-        async function loadScriptsSequentially(script_names) {
-            for (const script_name of script_names) {
-                await new Promise((resolve, reject) => {
-                    const new_script = document.createElement('script');
-                    new_script.src = 'assets/js/' + script_name + '?t=' + Date.now();
-                    current_script.parentNode.insertBefore(new_script, current_script.nextSibling);
-                    current_script = new_script;
-                    new_script.onload = resolve;
-                    new_script.onerror = reject;
-                });
-            }
+    <script type="module">
+        import Canvas2D from './assets/js/canvas2d.js';
+        let canvas = document.getElementById('canvas2d');
+        let canvas2d = new Canvas2D(canvas);
+        let draw = function(dt, elapsed) {
+            canvas2d.draw_line_plane(1, 2, 4, 2, {color:'#008F00', thickness:3});
+            canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5, {color:'#008F00', thickness:3});
+            canvas2d.draw_point_plane(-2, 2, {color: '#9F0000', thickness: 6});
+            canvas2d.draw_point_plane(-2, 1.23, {color: '#0000AF', thickness: 6});
+            canvas2d.draw_point_plane(-1, -1, {color: '#3F00AF', thickness: 10});
         }
-        loadScriptsSequentially(script_names).catch(console.error);
-    </script>
-    <script>
-        function main() {
-            let canvas = document.getElementById('canvas2d');
-            let canvas2d = new Canvas2D(canvas);
-            let draw = function(dt, elapsed) {
-                canvas2d.draw_line_plane(1, 2, 4, 2, {color:'#008F00', thickness:3});
-                canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5, {color:'#008F00', thickness:3});
-                canvas2d.draw_point_plane(-2, 2, {color: '#9F0000', thickness: 6});
-                canvas2d.draw_point_plane(-2, 1.23, {color: '#0000AF', thickness: 6});
-                canvas2d.draw_point_plane(-1, -1, {color: '#3F00AF', thickness: 10});
-            }
-            canvas2d.add_draw(draw);
-        }
+        canvas2d.add_draw(draw);
     </script>
 </body>
 

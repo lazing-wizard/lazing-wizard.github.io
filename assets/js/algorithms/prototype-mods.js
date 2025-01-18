@@ -1,8 +1,10 @@
 
 // These functions need to work with inheritance as if with decorators to achieve static dispatching behaviour
 
+import { reduce_arrays, array_subtraction } from './array-mods.js';
+
 // Makes possible to refer static members from the class name and from instance
-function create_static_data_descriptors(target_class, parent_class) {
+export function create_static_data_descriptors(target_class, parent_class) {
     const properties = reduce_arrays(target_class.static_data_properties).filter((property) => property);
     for (const property of properties) {
         // Define property to get static member from class instance
@@ -39,8 +41,9 @@ function create_static_data_descriptors(target_class, parent_class) {
         });
     }
 }
+
 // Makes possible to discover members for decorator
-function create_instance_data_descriptors(target_class) {
+export function create_instance_data_descriptors(target_class) {
     const properties = reduce_arrays(target_class.instance_data_properties).filter((property) => property);
     for (const property of properties) {
         Object.defineProperty(target_class.prototype, property, {
@@ -51,7 +54,7 @@ function create_instance_data_descriptors(target_class) {
 }
 
 // Copies undefined methods and data properties from decorated class to decorator
-function delegate_undefined_descriptors(decorated_class, decorator_class, delegate_name) {
+export function delegate_undefined_descriptors(decorated_class, decorator_class, delegate_name) {
     const decorated_descriptors = Object.entries(Object.getOwnPropertyDescriptors(decorated_class.prototype));
     const decorator_descriptors = Object.entries(Object.getOwnPropertyDescriptors(decorator_class.prototype));
 
@@ -60,7 +63,7 @@ function delegate_undefined_descriptors(decorated_class, decorator_class, delega
             if (decorator_descriptor.value) {
                 decorated_class.prototype[decorator_property] = function(...args) {
                     return this[delegate_name][decorator_property](...args);
-                }
+                };
             } else if (decorator_descriptor.get || decorator_descriptor.set) {
                 Object.defineProperty(decorated_class.prototype, decorator_property, {
                     get() {

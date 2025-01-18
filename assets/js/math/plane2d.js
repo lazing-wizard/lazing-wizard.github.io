@@ -1,16 +1,33 @@
 
 // "Plane2D" class manages logic of tying 2D coordinate system with scaling and repositioning to view rectangle
 
-function Plane2D(...args) { this.create(...args); }
+import { create_instance_data_descriptors } from '../algorithms/prototype-mods.js';
+
+import { vec2, vec3, mat3, Mat } from './mat.js';
+
+export default class Plane2D {
+    constructor(...args) { this.create(...args); };
+    static instance_data_properties =
+        ['view_size', 'view_aspect', 'center', 'scale', 'scale_base',
+         'scale_power', 'span', 'span_base', 'min', 'max', 'size',
+         'm_plane_to_view', 'm_view_to_plane',
+         'grid_step', 'grid_scale_count',
+         'minor_grid_step', 'minor_grid_scale_count',
+         'vertical_axis_visible', 'horizontal_axis_visible',
+         'vertical_lines', 'horizontal_lines',
+         'vertical_lines_minor', 'horizontal_lines_minor',
+         'vec2buf', 'vec3buf', 'array2buf', 'array3buf'];
+}
+create_instance_data_descriptors(Plane2D);
 
 // Convert x,y coordinates from plane to view
 Plane2D.prototype.to_view = Plane2D.prototype.from_plane = Plane2D.prototype.plane_to_view = function() {
     return this.translate(this.m_plane_to_view, ...arguments);
-}
+};
 // Convert x,y coordinates from view to plane
 Plane2D.prototype.to_plane = Plane2D.prototype.from_view = Plane2D.prototype.view_to_plane = function() {
     return this.translate(this.m_view_to_plane, ...arguments);
-}
+};
 
 // Call when view size changed
 Plane2D.prototype.resize_view = function(new_width, new_height) {
@@ -19,7 +36,7 @@ Plane2D.prototype.resize_view = function(new_width, new_height) {
     this.scale_power += Math.log(new_height/this.view_size.y)/Math.log(this.scale_base);
     this.calculate_view(new_width, new_height).calculate_scale().calculate_size().calculate_matrix().calculate_grid();
     return this;
-}
+};
 // Call when need to move plane in direction of (x, y)
 // (x, y) are in view coordinate space
 // When DPR differs values have to be multiplied by the ratio
@@ -28,23 +45,19 @@ Plane2D.prototype.move_for = function(dx, dy) {
     this.center.y += dy*this.size.y/this.view_size.y;
     this.calculate_size().calculate_matrix().calculate_grid();
     return this;
-}
+};
 // Call when need to scale at point, scale is the amount added to scale_power
 // (x, y) are in view coordinate space
 Plane2D.prototype.scale_at = function(view_x, view_y, scale) {
-    let [x0, y0] = this.to_plane(view_x, view_y);
+    const [x0, y0] = this.to_plane(view_x, view_y);
     this.scale_power += scale;
     this.calculate_scale().calculate_size().calculate_matrix();
-    let [x1, y1] = this.to_plane(view_x, view_y);
+    const [x1, y1] = this.to_plane(view_x, view_y);
     this.center.x += x0 - x1;
     this.center.y += y0 - y1;
     this.calculate_size().calculate_matrix().calculate_grid();
     return this;
-}
-/// fix problem when moving after scale
-Plane2D.prototype.scale_between = function(view_x0, view_y0, view_x1, view_y1, scale) {
-    ///
-}
+};
 
 // Initialize fresh plane for certain width and height
 Plane2D.prototype.init_view = function(width, height) {
@@ -63,22 +76,11 @@ Plane2D.prototype.init_view = function(width, height) {
     this.calculate_scale().calculate_size().calculate_matrix().calculate_grid();
     
     return this;
-}
+};
 
 
 
 // Implementation
-
-Plane2D.instance_data_properties = ['view_size', 'view_aspect', 'center', 'scale', 'scale_base',
-                                    'scale_power', 'span', 'span_base', 'min', 'max', 'size',
-                                    'm_plane_to_view', 'm_view_to_plane',
-                                    'grid_step', 'grid_scale_count',
-                                    'minor_grid_step', 'minor_grid_scale_count',
-                                    'vertical_axis_visible', 'horizontal_axis_visible',
-                                    'vertical_lines', 'horizontal_lines',
-                                    'vertical_lines_minor', 'horizontal_lines_minor',
-                                    'vec2buf', 'vec3buf', 'array2buf', 'array3buf'];
-create_instance_data_descriptors(Plane2D);
 
 // Values in this function exist only to declare variables
 Plane2D.prototype.create = function(width, height) {
@@ -132,19 +134,19 @@ Plane2D.prototype.create = function(width, height) {
         this.init_view(width, height);
     else
         this.init_view(1, 1);
-}
+};
 
 Plane2D.prototype.calculate_view = function(width, height) {
     this.view_size.x = width;
     this.view_size.y = height;
     this.view_aspect = width/height;
     return this;
-}
+};
 
 Plane2D.prototype.calculate_scale = function() {
     this.scale = Math.pow(this.scale_base, this.scale_power);
     return this;
-}
+};
 
 Plane2D.prototype.calculate_size = function() {
     this.span_base.x = 5.0 * this.view_aspect;
@@ -161,7 +163,7 @@ Plane2D.prototype.calculate_size = function() {
     this.size.y = this.span.y*2.0;
     
     return this;
-}
+};
 
 Plane2D.prototype.calculate_matrix = function() {
     this.m_plane_to_view.assign(this.view_size.x/this.size.x, 0,                             this.view_size.x/2 - this.center.x*this.view_size.x/this.size.x,
@@ -171,17 +173,18 @@ Plane2D.prototype.calculate_matrix = function() {
                                 0,                            -this.size.y/this.view_size.y, this.size.y/2 + this.center.y,
                                 0,                            0,                             1);
     return this;
-}
+};
 
 // sign(x)*mod(abs(x), d) on desmos
-let signed_mod = function(x, d) {
-    return x % d;
-}
-let positive_mod = function(x, d) {
+//function signed_mod(x, d) {
+//    return x % d;
+//}
+
+function positive_mod(x, d) {
     return ((x%d)+d)%d;
 }
 
-let get_grid_step = function(n) {
+function get_grid_step(n) {
     // Calculates grid step as 0.1, 0.25, 0.5, 1, 2, 4, 10, 20, 40, 100...
     // 0.1 0.2 0.25 0.5 1 2 4 5 10 20 40 50 100 200 400 500 1000 2000 4000
     //                  0 1 2 3 4  5  6  7  8   9   10  11  12   13   14
@@ -191,32 +194,32 @@ let get_grid_step = function(n) {
 
     //https://www.desmos.com/calculator/vqhk6xb50e
     // Calculates grid step as 0.1, 0.2, 0.5, 1, 2, 10, 20, 50...
-    //   -9    -8 |   -7    -6    -5  |  -4    -3    -2  |  -1     0     1  |   2     3     4  |   5     6     7  |   8     9    10 |   11    12    13 |   14
-    //0.001 0.002 |0.005  0.01  0.02  |0.05   0.1   0.2  | 0.5     1     2  |   5    10    20  |  50   100   200  | 500  1000  2000 | 5000 10000 20000 |50000
-//2^     -3    -2 |   -3    -2    -1  |  -2    -1     0  |  -1     0     1  |   0     1     2  |   1     2     3  |   2     3     4 |    3     4     5 |    4     
-//5^     -3    -3 |   -2    -2    -2  |  -1    -1    -1  |   0     0     0  |   1     1     1  |   2     2     2  |   3     3     3 |    4     4     4 |    5
+    //   -9    -8 |   -7    -6    -5  |  -4    -3    -2  |  -1     0     1  |   2     3     4  |   5     6     7  |   8     9    10 |   11    12    13
+    //0.001 0.002 |0.005  0.01  0.02  |0.05   0.1   0.2  | 0.5     1     2  |   5    10    20  |  50   100   200  | 500  1000  2000 | 5000 10000 20000
+//2^     -3    -2 |   -3    -2    -1  |  -2    -1     0  |  -1     0     1  |   0     1     2  |   1     2     3  |   2     3     4 |    3     4     5  
+//5^     -3    -3 |   -2    -2    -2  |  -1    -1    -1  |   0     0     0  |   1     1     1  |   2     2     2  |   3     3     3 |    4     4     4
 
-    let two_power = Math.round(n/3) + Math.round(positive_mod(n - 1.5, 3) - 1.5);
-    let five_power = Math.round(n/3);
+    const two_power = Math.round(n/3) + Math.round(positive_mod(n - 1.5, 3) - 1.5);
+    const five_power = Math.round(n/3);
 
     return Math.pow(2.0, two_power)*Math.pow(5.0, five_power);
-}
+};
 Plane2D.prototype.calculate_grid = function() {
-    let grid_count_vertical = this.view_size.y / 60;
-    let grid_count_horizontal = this.view_size.x / 120;
+    const grid_count_vertical = this.view_size.y / 40;
+    const grid_count_horizontal = this.view_size.x / 80;
 
-    let frac_step = Math.max(this.size.x/grid_count_horizontal, this.size.y/grid_count_vertical, this.size.x/20, this.size.y/20);
+    const frac_step = Math.max(this.size.x/grid_count_horizontal, this.size.y/grid_count_vertical, this.size.x/20, this.size.y/20);
 
     while (this.grid_step < frac_step) {
         this.grid_scale_count += 1;
         this.grid_step = get_grid_step(this.grid_scale_count);
     }
     while (true) {
-        let grid_scale_count = this.grid_scale_count - 1;
-        let grid_step = get_grid_step(grid_scale_count);
+        const grid_scale_count = this.grid_scale_count - 1;
+        const grid_step = get_grid_step(grid_scale_count);
         if (grid_step < frac_step) {
-            let lesser_diff = frac_step - grid_step;
-            let bigger_diff = this.grid_step - frac_step;
+            const lesser_diff = frac_step - grid_step;
+            const bigger_diff = this.grid_step - frac_step;
             if (bigger_diff > lesser_diff) {
                 this.grid_scale_count = grid_scale_count;
                 this.grid_step = grid_step;
@@ -229,10 +232,10 @@ Plane2D.prototype.calculate_grid = function() {
     this.minor_grid_scale_count = this.grid_scale_count - 2;
     this.minor_grid_step = get_grid_step(this.minor_grid_scale_count);
 
-    let grid_center_x = Math.trunc(this.center.x/this.grid_step)*this.grid_step;
-    let grid_center_y = Math.trunc(this.center.y/this.grid_step)*this.grid_step;
+    const grid_center_x = Math.trunc(this.center.x/this.grid_step)*this.grid_step;
+    const grid_center_y = Math.trunc(this.center.y/this.grid_step)*this.grid_step;
 
-    let calculate_values = function(target, center, step, min, max) {
+    const calculate_values = function(target, center, step, min, max) {
         target.length = 0;
         let shift;
         shift = center + step;
@@ -246,8 +249,11 @@ Plane2D.prototype.calculate_grid = function() {
             target.push(shift);
             shift -= step;
         }
-    }
+    };
     
+    /// Make lines number consistent for better passing on gpu without reallocation, currently it changes fast when moving plane
+    /// It's possibly better to calculate lines number as ceil of (max-min)/grid_step+2 and start from the invisible ones (for showing numbers)
+
     /// Don't include usual lines in minor lines array
 
     // Vertical lines
@@ -260,12 +266,12 @@ Plane2D.prototype.calculate_grid = function() {
     calculate_values(this.horizontal_lines_minor, grid_center_y, this.minor_grid_step, this.min.y, this.max.y);
     
     return this;
-}
+};
 
 // Convert homogeneous coordinates with matrix
 Plane2D.prototype.translate = function(m) {
     if (arguments.length == 2) {
-        let v = arguments[1];
+        const v = arguments[1];
         if (v instanceof Array) {
             if (v.length == 2) {
                 this.vec3buf.assign(v[0], v[1], 1).mul_inplace(m);
@@ -301,4 +307,4 @@ Plane2D.prototype.translate = function(m) {
         return this.array3buf;
     }
     throw new Error('Wrong vector translation');
-}
+};

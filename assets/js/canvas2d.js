@@ -425,7 +425,6 @@ Canvas2D.prototype.attach_canvas = function() {
         
         let need_resize = false;
         if (this.preserve_ratio && (this.device_pixel_ratio != window.devicePixelRatio)) {
-            console.log('PRESERVING');
             this.device_pixel_ratio = window.devicePixelRatio;
             const pr = this.device_pixel_ratio;
             if (pr < 4/3) {
@@ -445,7 +444,6 @@ Canvas2D.prototype.attach_canvas = function() {
         }
         
         if (!this.preserve_ratio) {
-            console.log('NOT PRESERVING');
             if (this.pixel_ratio == 1)
                 need_resize = false;
             else

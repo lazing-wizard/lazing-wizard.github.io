@@ -4,7 +4,7 @@
 // Vectors are represented vertically
 // Transfromation vectors in matrix are represented vertically
 
-export class Mat {
+export default class Mat {
     constructor(height, width, ...data) {
         this.height = height;
         this.width = width;
@@ -448,5 +448,27 @@ Object.defineProperty(Mat.prototype, 'dim_v', {
     get() { return this.height; }
 });
 Object.defineProperty(Mat.prototype, 'dim_h', {
-    get() { return this.width[1]; }
+    get() { return this.width; }
 });
+
+Mat.prototype.identity = function(dim) {
+    if (this.data.length != dim*dim) {
+        this.data = new Array(dim * dim);
+    }
+    for (let i = 0; i < this.data.length; ++i) {
+        this.data[i] = 0;
+    }
+    for (let i = 0; i < dim; ++i) {
+        this.data[dim*i + i] = 1;
+    }
+    return this;
+};
+
+Mat.prototype.compare = function(m) {
+    if (this.height != m.height || this.width != m.width)
+        return false;
+    for (let i = 0; i < this.data.length; ++i)
+        if (this.data[i] != m.data[i])
+            return false;
+    return true;
+};

@@ -1,4 +1,19 @@
 
+import Renderer from './renderer-base.js';
+
+export class RendererContext2D extends Renderer {
+    constructor(...args) { super(...args); RendererContext2D.prototype.create.call(this, ...args); }
+}
+
+
+
+// Implementation
+
+Renderer.prototype.create = function(...args) {
+    
+};
+
+
 //
 
 import { vec2 } from './math/mat.js';
@@ -21,7 +36,7 @@ Canvas2D.prototype.set_pixel_ratio = function(pixel_ratio) {
     return this;
 };
 
-Canvas2D.prototype.draw_point = function(x, y, format, base_format) {
+Drawer.prototype.draw_point = function(x, y, format, base_format) {
     const ctx = this.context;
     if (!base_format) base_format = this.point_format;
     if (!format) format = base_format;
@@ -36,16 +51,20 @@ Canvas2D.prototype.draw_point = function(x, y, format, base_format) {
     return this;
 };
 
-Canvas2D.prototype.draw_point_plane = function(x, y, format, base_format) {
+Drawer.prototype.draw_point_plane = function(x, y, format, base_format) {
     [x, y] = this.plane.to_view(x, y);
     return this.draw_point(x, y, format, base_format);
 };
 
 
-Canvas2D.prototype.draw_line = function(x0, y0, x1, y1, format, base_format) {
+Drawer.prototype.draw_line = function(x0, y0, x1, y1, format, base_format) {
     const ctx = this.context;
     if (!base_format) base_format = this.line_format;
     if (!format) format = base_format;
+
+    // Create temporary object for style, passing format and base style to get like this:
+    //style.line.color
+
 
     ctx.strokeStyle = priority_member_chose(format, 'color', base_format, 'color');
     ctx.lineWidth = priority_member_chose(format, 'thickness', base_format, 'thickness');
@@ -56,7 +75,7 @@ Canvas2D.prototype.draw_line = function(x0, y0, x1, y1, format, base_format) {
     ctx.stroke();
     return this;
 };
-Canvas2D.prototype.draw_line_plane = function(x0, y0, x1, y1, format, base_format) {
+Drawer.prototype.draw_line_plane = function(x0, y0, x1, y1, format, base_format) {
     [x0, y0] = this.plane.to_view(x0, y0);
     [x1, y1] = this.plane.to_view(x1, y1);
     return this.draw_line(x0, y0, x1, y1, format, base_format);
@@ -64,7 +83,7 @@ Canvas2D.prototype.draw_line_plane = function(x0, y0, x1, y1, format, base_forma
 
 // Baseline: top, hanging, middle, alphabetic, ideographic, bottom
 // Align: left, center, right, start, end
-Canvas2D.prototype.draw_text = function(text, x, y, format, base_format) {
+Drawer.prototype.draw_text = function(text, x, y, format, base_format) {
     const ctx = this.context;
     if (!base_format) base_format = this.text_format;
     if (!format) format = base_format;
@@ -152,16 +171,14 @@ Canvas2D.prototype.draw_text = function(text, x, y, format, base_format) {
     return this;
 };
 
-Canvas2D.prototype.draw_text_plane = function(text, x, y, format, base_format) {
+Drawer.prototype.draw_text_plane = function(text, x, y, format, base_format) {
     [x, y] = this.plane.to_view(x, y);
     return this.draw_text(text, x, y, format, base_format);
 };
 
-Canvas2D.prototype.add_draw = function(callback) {
+Drawer.prototype.add_draw = function(callback) {
     this.draw_callbacks.push(callback);
 };
-
-
 
 // Implementation
 
@@ -173,7 +190,7 @@ Canvas2D.prototype.create = function(...args) {
     this.device_pixel_ratio = 1;
     this.pixel_ratio = 1;
     this.pixel_ratio_modifier = 1.0;
-    this.draw_mode = 'p';
+
     this.event_delegate = {};
     this.draw_callbacks = [];
 
@@ -187,78 +204,6 @@ Canvas2D.prototype.create = function(...args) {
     this.buf1 = vec2();
     this.buf2 = vec2();
     this.buf3 = vec2();
-
-    this.background_color = '#FFFFFF'; // Can be transparent
-
-    this.point_format = {
-        color: '#000000',
-        thickness: 1
-    };
-    this.line_format = {
-        color: '#000000',
-        thickness: 1
-    };
-    this.text_format = {
-        color: '#000000',
-        background_color: '#FFFFFF', // Color, 'none', 'transparent'
-        background_indent: vec2(0, 0),
-        font: 'italic 9pt sans-serif',
-        offset: vec2(0, 0),
-        align: 'left',
-        baseline: 'top',
-        fit: false, // Moves text inside plane when at least part of bounding box is inside
-        fit_vertical: false,
-        fit_horizontal: false,
-        bound: false, // Moves text inside plane always
-        bound_vertical: false,
-        bound_horizontal: false,
-        indent: vec2(0, 0), // Works only with fit or bound
-    };
-
-    this.grid_axis_format = {
-        color: '#000000',
-        thickness: 2
-    };
-    this.grid_line_format = {
-        color: '#B8B8B8',
-        thickness: 2
-    };
-    this.grid_line_minor_format = {
-        color: '#F0F0F0',
-        thickness: 2
-    };
-    this.grid_text_horizontal_format = {
-        color: '#000000',
-        background_color: '#FFFFFF',
-        background_indent: vec2(1, 1),
-        font: '9pt sans-serif',
-        offset: vec2(-1, 5),
-        align: 'center',
-        baseline: 'top',
-        fit: true,
-        fit_vertical: true,
-        fit_horizontal: true,
-        bound: false,
-        bound_vertical: true,
-        bound_horizontal: false,
-        indent: vec2(2, 2),
-    };
-    this.grid_text_vertical_format = {
-        color: '#000000',
-        background_color: '#FFFFFF',
-        background_indent: vec2(1, 1),
-        font: '9pt sans-serif',
-        offset: vec2(-3, 0),
-        align: 'right',
-        baseline: 'middle',
-        fit: true,
-        fit_vertical: true,
-        fit_horizontal: true,
-        bound: false,
-        bound_vertical: false,
-        bound_horizontal: true,
-        indent: vec2(2, 2),
-    };
 
     for (const arg of args) {
         if (arg instanceof HTMLCanvasElement) {

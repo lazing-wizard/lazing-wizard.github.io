@@ -35,7 +35,7 @@
         Please use a browser that supports "canvas"
     </canvas>
     <script type="module">
-        import Canvas2D from './assets/js/canvas2d.js';
+        /*import Canvas2D from './assets/js/canvas2.js';
         let canvas = document.getElementById('canvas2d');
         let canvas2d = new Canvas2D(canvas);
         let draw = function(dt, elapsed) {
@@ -45,7 +45,27 @@
             canvas2d.draw_point_plane(-2, 1.23, {color: '#0000AF', thickness: 6});
             canvas2d.draw_point_plane(-1, -1, {color: '#3F00AF', thickness: 10});
         }
-        canvas2d.add_draw(draw);
+        canvas2d.add_draw(draw);*/
+        import AnimationLoop from './source/animation-loop.js';
+        const loop = new AnimationLoop();
+        loop.add_on_update(function(dt, elapsed) {
+            console.log(dt/1000);
+        });
+        loop.manual_update_interval = 600;
+        function cb() {
+            loop.trigger();
+            window.setTimeout(cb, 1);
+        }
+        window.setTimeout(cb, 1);
+        import StyleManager from './source/drawing/style/style-manager.js';
+        import common_style from './source/drawing/style/common-style.js';
+
+        const style = new StyleManager();
+        common_style(style);
+        console.log(style);
+        console.log(style.grid_axis.get_chain());
+        import { mat4 } from './source/math/mat.js';
+        let m = mat4().identity(4);
     </script>
 </body>
 

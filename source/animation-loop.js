@@ -46,7 +46,14 @@ AnimationLoop.prototype.remove_on_stop = function(...callbacks) {
     return this;
 };
 
-AnimationLoop.prototype.start = function(start_time) { const animationLoop = this;
+AnimationLoop.prototype.trigger = function() {
+    if (this.manual_update_scheduled)
+        return;
+    this.manual_update();
+};
+
+AnimationLoop.prototype.start = function(start_time) {
+    this.auto_update = true;
     if (this.requestAnimationFrameId)
         return;
     if (start_time)
@@ -62,20 +69,16 @@ AnimationLoop.prototype.start = function(start_time) { const animationLoop = thi
         callback(this.start_time);
     }
     const update = function() {
-        animationLoop.elapsed_prev = animationLoop.elapsed;
-        animationLoop.elapsed = (Date.now() - animationLoop.start_time);
-        animationLoop.dt = animationLoop.elapsed - animationLoop.elapsed_prev;
-        for (const callback of animationLoop.on_update) {
-            callback(animationLoop.dt, animationLoop.elapsed);
-        }
-        animationLoop.requestAnimationFrameId = window.requestAnimationFrame(update);
-        //animationLoop.requestAnimationFrameId = window.setTimeout(update, 1000/60)
-    };
+        this.update();
+        this.requestAnimationFrameId = window.requestAnimationFrame(update);
+        //this.requestAnimationFrameId = window.setTimeout(update, 1000/60)
+    }.bind(this);
     update();
     return this;
 };
 
 AnimationLoop.prototype.stop = function() {
+    this.auto_update = false;
     if (!this.requestAnimationFrameId)
         return this.start_time;
     for (const callback of this.on_stop) {
@@ -96,11 +99,16 @@ AnimationLoop.prototype.create = function() {
     this.on_update = [];
     this.on_stop = [];
     
-    this.start_time = null;
-    this.elapsed = null;
-    this.elapsed_prev = null;
-    this.dt = null;
+    this.start_time = Date.now();
+    this.elapsed = 0;
+    this.elapsed_prev = 0;
+    this.dt = 0;
     
+    this.auto_update = false;
+    this.manual_update_scheduled = false;
+    this.manual_update_last_time = 0;
+    this.manual_update_interval = 1000/60;
+
     this.requestAnimationFrameId = null;
 };
 
@@ -112,6 +120,31 @@ AnimationLoop.prototype.add_callbacks_begin = function(target, ...callbacks) {
 };
 AnimationLoop.prototype.remove_callbacks = function(target, ...callbacks) {
     remove_elements_from(target, ...reduce_arrays(callbacks));
+};
+
+AnimationLoop.prototype.update = function() {
+    this.elapsed_prev = this.elapsed;
+    this.elapsed = Date.now() - this.start_time;
+    this.dt = this.elapsed - this.elapsed_prev;
+    for (const callback of this.on_update) {
+        callback(this.dt, this.elapsed);
+    }
+};
+
+AnimationLoop.prototype.manual_update = function() {
+    if (this.auto_update)
+        return;
+    const time = Date.now();
+    const dt = (time - this.manual_update_last_time);
+    //console.log(dt);
+    if (dt >= this.manual_update_interval) {
+        this.manual_update_last_time = time;
+        this.update();
+        this.manual_update_scheduled = false;
+    } else {
+        this.manual_update_scheduled = true;
+        window.setTimeout(this.manual_update.bind(this), this.manual_update_interval - dt);
+    }
 };
 
 if (window) {

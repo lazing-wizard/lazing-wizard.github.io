@@ -4,6 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="cache-control" content="max-age=0" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta http-equiv="pragma" content="no-cache" />
     <title>Canvas</title>
     <style>
         body {
@@ -30,43 +35,1435 @@
         }
     </style>
 </head>
-<body>
+<body onload="main()">
+    
+    <!-- DOM -->
+    <canvas id="canvasgl">
+        Please use a browser that supports "canvas"
+    </canvas>
     <canvas id="canvas2d">
         Please use a browser that supports "canvas"
     </canvas>
-    <script type="module">
-        /*import Canvas2D from './assets/js/canvas2.js';
-        let canvas = document.getElementById('canvas2d');
-        let canvas2d = new Canvas2D(canvas);
-        let draw = function(dt, elapsed) {
-            canvas2d.draw_line_plane(1, 2, 4, 2, {color:'#008F00', thickness:3});
-            canvas2d.draw_line_plane(2.5, 0.5, 2.5, 3.5, {color:'#008F00', thickness:3});
-            canvas2d.draw_point_plane(-2, 2, {color: '#9F0000', thickness: 6});
-            canvas2d.draw_point_plane(-2, 1.23, {color: '#0000AF', thickness: 6});
-            canvas2d.draw_point_plane(-1, -1, {color: '#3F00AF', thickness: 10});
+    
+    <script>
+    // It will be here until I complete separated code
+    function main() {
+            let canvas2d = document.getElementById('canvas2d');
+            let canvasgl = document.getElementById('canvasgl');
+            
+            canvas2d.graph = Graph().setCanvas(canvas2d, canvasgl).setDraw(function(){}).setShader(document.getElementById('main-image').text);
+            
+            canvasgl.addEventListener(
+                "webglcontextlost",
+                (e) => {
+                    console.log(e);
+                },
+                false,
+            );
         }
-        canvas2d.add_draw(draw);*/
-        import AnimationLoop from './source/animation-loop.js';
-        const loop = new AnimationLoop();
-        loop.add_on_update(function(dt, elapsed) {
-            console.log(dt/1000);
-        });
-        loop.manual_update_interval = 600;
-        function cb() {
-            loop.trigger();
-            window.setTimeout(cb, 1);
+        
+    const Mat_ = function(...args) {
+    this.height = args[0];
+    this.width = args[1];
+    this.data = args.slice(2);
+    this.color = "#5fff5f";
+    this.origin = new Array(this.height);
+    this.origin.fill(0);
+}
+function mat(...args) {
+    return new Mat_(...args);
+}
+function vec1(...args) {
+    if (args.length != 1) throw new Error('Incorrect values for vec1');
+    return mat(1, 1, ...args);
+}
+function vec2(...args) {
+    if (args.length != 2) throw new Error('Incorrect values for vec2');
+    return mat(2, 1, ...args);
+}
+function vec3(...args) {
+    if (args.length != 3) throw new Error('Incorrect values for vec3');
+    return mat(3, 1, ...args);
+}
+function vec4(...args) {
+    if (args.length != 4) throw new Error('Incorrect values for vec4');
+    return mat(4, 1, ...args);
+}
+function mat1(...args) {
+    if (args.length != 1) throw new Error('Incorrect values for mat1');
+    return mat(1, 1, ...args);
+}
+function mat2(...args) {
+    if (args.length != 4) throw new Error('Incorrect values for mat2');
+    return mat(2, 2, ...args);
+}
+function mat3(...args) {
+    if (args.length != 9) throw new Error('Incorrect values for mat3');
+    return mat(3, 3, ...args);
+}
+function mat4(...args) {
+    if (args.length != 16) throw new Error('Incorrect values for mat4');
+    return mat(4, 4, ...args);
+}
+Mat_.prototype.add_number = function add_number(n) {
+    var temp = new Array(this.height * this.width);
+    for (var i = 0; i < this.data.length; ++i) {
+        temp[i] = this.data[i] + n;
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.add = function add(m) {
+    if (!(m instanceof Mat_)) {
+        return this.add_number(m);
+    }
+    if (this.width != m.width || this.height != m.height) {
+        throw new Error('Incorrect size for mat addition');
+    }
+    var temp = new Array(this.height * this.width);
+    for (var i = 0; i < this.data.length; ++i) {
+        temp[i] = this.data[i] + m.data[i];
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.sub_number = function sub_number(n) {
+    var temp = new Array(this.height * this.width);
+    for (var i = 0; i < this.data.length; ++i) {
+        temp[i] = this.data[i] - n;
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.sub = function add(m) {
+    if (!(m instanceof Mat_)) {
+        return this.sub_number(m);
+    }
+    if (this.width != m.width || this.height != m.height) {
+        throw new Error('Incorrect size for mat subtraction');
+    }
+    var temp = new Array(this.height * this.width);
+    for (var i = 0; i < this.data.length; ++i) {
+        temp[i] = this.data[i] - m.data[i];
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.mul_number = function mul_number(n) {
+    var temp = new Array(this.height * this.width);
+    for (var i = 0; i < this.data.length; ++i) {
+        temp[i] = this.data[i] * n;
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+// Multiplying this by matrix that is placed on the left
+Mat_.prototype.mul = function mul(m) {
+    if (!(m instanceof Mat_)) {
+        return this.mul_number(m);
+    }
+    if (this.height != m.width) {
+        throw new Error('Incorrect size for mat multiplication');
+    }
+            
+    var new_width = this.width;
+    var new_height = m.height;
+    var temp = new Array(new_width * new_height);
+            
+    for (var i = 0; i < new_height; i++) {
+        for (var j = 0; j < new_width; j++) {
+            temp[i*new_width + j] = 0;
+            for (var x = 0; x < m.width; x++) {
+                temp[i*new_width + j] += m.data[i*m.width + x] * this.data[x*this.width + j];
+            } 
+        } 
+    }
+    return new Mat_(new_height, new_width, ...temp).setorigin(this.origin.slice(0, new_height)).setcolor(this.color);
+}
+Mat_.prototype.x = function x() {
+    return this.data[0];
+}
+Mat_.prototype.y = function y() {
+    return this.data[1];
+}
+Mat_.prototype.z = function z() {
+    return this.data[2];
+}
+Mat_.prototype.w = function w() {
+    return this.data[3];
+}
+Mat_.prototype.setcolor = function setcolor(color) {
+    this.color = color;
+    return this;
+}
+Mat_.prototype.setorigin = function setorigin(...args) {
+    var temp = undefined;
+    if (args[0] instanceof Array) {
+        temp = [...args[0]];
+    } else if (args[0] instanceof Mat_) {
+        temp = [...args[0].data];
+    } else {
+        temp = [...args];
+    }
+    if (temp == undefined)
+        throw new Error("Wrong origin type");
+    //if (temp.length != this.height)
+    //    throw new Error("Origin mismatches dimension");
+    this.origin = temp;
+    return this;
+}
+Mat_.prototype.resetorigin = function resetorigin() {
+    for (let i = 0; i < this.height; ++i) {
+        this.origin[i] = 0.0;
+    }
+    return this;
+}
+Mat_.prototype.cnorm = function cnorm() {
+    var temp = new Array(this.width * this.height);
+    for (var j = 0; j < this.width; ++j) {
+        var sum = 0;
+        for (var i = 0; i < this.height; ++i) {
+            sum += Math.pow(this.data[this.width*i + j], 2);
         }
-        window.setTimeout(cb, 1);
-        import StyleManager from './source/drawing/style/style-manager.js';
-        import common_style from './source/drawing/style/common-style.js';
+        sum = Math.sqrt(sum);
+        for (var i = 0; i < this.height; ++i) {
+            temp[this.width*i + j] = this.data[this.width*i + j] / sum;
+        }
+    }
+    return new Mat_(this.height, this.width, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.t = function t() {
+    var temp = new Array(this.width * this.height);
+    for (var j = 0; j < this.width; ++j) {
+        for (var i = 0; i < this.height; ++i) {
+            temp[this.width*i + j] = this.data[this.width*j + i];
+        }
+    }
+    return new Mat_(this.width, this.height, ...temp).setorigin(this.origin.slice(0, this.height)).setcolor(this.color);
+}
+Mat_.prototype.dot = function dot(v) {
+    if (this.width != 1 || v.width != 1) throw new Error('Trying to dot multiply matrix');
+    if (this.height != v.height) throw new Error('Trying to dot multiply unequal vectors');
+    let value = 0;
+    for (var i = 0; i < this.height; ++i)
+        value += this.data[i] * v.data[i];
+    return value;
+}
+Mat_.prototype.project = function project(v) {
+    //let dir = v;
+    //v = this;
+    //let m = mat2(dir.x()*dir.x(), dir.x()*dir.y(),
+    //             dir.y()*dir.x(), dir.y()*dir.y());
+    //let m1 = mat2(dir.x(), dir.x(),
+    //              dir.y(), dir.y());
+    //let m2 = mat2(dir.x(), 0.0,
+    //              0.0,     dir.y());
+    //m = m2.mul(m1);
+    //return v.mul(m).mul(1/pow(dir.length(), 2));
+    return v.mul(this.dot(v)/v.dot(v));
+}
+Mat_.prototype.align = function align(v) {
+    return this.project(v).cnorm().mul(this.length());
+}
+Mat_.prototype.length = function length() {
+    if (this.width != 1) throw new Error('Trying to get length of not vector');
+    let value = 0;
+    for (var i = 0; i < this.height; ++i)
+        value += this.data[i] * this.data[i];
+    return Math.sqrt(value);
+}
+Mat_.prototype.colors = ['#88a475', '#dc7974', '#3d8ca5'];
+Mat_.prototype.draw = function draw(graph) {
+    if (this.height != 2) {
+        throw new Error('Only mat of vec2s is drawable');
+    }
+    graph.context2d.strokeStyle = this.color;
+    graph.context2d.fillStyle = this.color;
+    for (var i = 0; i < this.width; ++i) {
+        graph.drawarrow(this.origin[0], this.origin[1], this.data[i], this.data[this.width+i]);
+    }
+    return this;
+}
+Mat_.prototype.line = function line(graph) {
+    if (this.height != 2) {
+        throw new Error('Only mat of vec2s is drawable');
+    }
+    graph.context2d.strokeStyle = this.color;
+    graph.context2d.fillStyle = this.color;
+    for (var i = 0; i < this.width; ++i) {
+        graph.drawline(this.origin[0], this.origin[1], this.data[i], this.data[this.width+i]);
+    }
+    return this;
+}
+/*Mat_.prototype.lineg = function lineg(graph) {
+    if (this.height != 2) {
+        throw new Error('Only mat of vec2s is drawable');
+    }
+    for (var i = 0; i < this.width; ++i) {
+    var grad = ctx.createLinearGradient(
+                                translate_x(viewport_translate_x(this.origin[0])),
+                                translate_y(viewport_translate_y(this.origin[1])),
+                                translate_x(viewport_translate_x(this.data[i])),
+                                translate_y(viewport_translate_y(this.data[this.width+i]))
+                                );
+        grad.addColorStop(0, this.originColor);
+        grad.addColorStop(1, this.color);
+        ctx.strokeStyle = grad;
+        ctx.fillStyle = grad;
+        draw_line(this.origin[0], this.origin[1], this.data[i], this.data[this.width+i]);
+    }
+    return this;
+}*/
+Mat_.prototype.point = function point(graph) {
+    graph.context2d.fillStyle = this.color;
+    for (var i = 0; i < this.width; ++i) {
+        graph.drawpoint(this.data[i], this.data[this.width+i], 5);
+    }
+    return this;
+}
+        
+function sqsin(dist) {
+    dist = Math.abs(dist-1 - Math.floor((dist-1)/4)*4 - 2) - 1;
+    return dist;
+}
+function sqcos(dist) {
+    dist = Math.abs(dist - Math.floor(dist/4)*4 - 2) - 1;
+    return dist;
+}
+        
+const Line_ = function Line_(v1, v2) {
+    if (!(v1 instanceof Array) && !(v1 instanceof Mat_) ||
+        !(v2 instanceof Array) && !(v2 instanceof Mat_)) {
+        throw new Error("Wrong line point types");
+    }
+    this.start(v1);
+    this.end(v2);
+}
+function line(v1, v2) {
+    if (v1 != undefined && v2 != undefined) {
+        return new Line_(v1, v2);
+    } else {
+        return new Line_([0, 0], [0, 0]);
+    }
+}
+Line_.prototype.start = function(...args) {
+    if (args.length == 0)
+        return this.start_;
+    if (args[0] instanceof Mat_)
+        this.start_ = args[0];
+    else if (args[0] instanceof Array)
+        this.start_ = mat(args[0].length, 1, ...args[0]);
+    else
+        this.start_ = mat(args.length, 1, ...args);
+    return this;
+}
+Line_.prototype.end = function(...args) {
+    if (args.length == 0)
+        return this.end_;
+    if (args[0] instanceof Mat_)
+        this.end_ = args[0];
+    else if (args[0] instanceof Array)
+        this.end_ = mat(args[0].length, 1, ...args[0]);
+    else
+        this.end_ = mat(args.length, 1, ...args);
+    return this;
+}
+Line_.prototype.length = function length() {
+    return this.end_.sub(this.start_).length();
+}
+Line_.prototype.setcolor = function setcolor(color) {
+    this.start_.setcolor(color);
+    this.end_.setcolor(color);
+    return this;
+}
+Line_.prototype.lineg = function lineg(graph) {
+    this.end_.setorigin(this.start_);
+    this.end_.originColor = this.start_.color;
+    this.end_.lineg(graph);
+    return this;
+}
+Line_.prototype.draw = function draw(graph) {
+    this.end_.setorigin(this.start_);
+    this.end_.draw(graph);
+    return this;
+}
+Line_.prototype.line = function line(graph) {
+    this.end_.setorigin(this.start_);
+    this.end_.line(graph);
+    return this;
+}
+Line_.prototype.point = function point(graph) {
+    this.start_.point(graph);
+    this.end_.point(graph);
+    return this;
+}
+Line_.prototype.add = function add(rhs) {
+    if (rhs instanceof Line_)
+        return new Line_(this.start_.add(rhs.start_), this.end_.add(rhs.end_));
+    else
+        return new Line_(this.start_.add(rhs), this.end_.add(rhs));
+}
+Line_.prototype.sub = function sub(rhs) {
+    if (rhs instanceof Line_)
+        return new Line_(this.start_.sub(rhs.start_), this.end_.sub(rhs.end_));
+    else
+        return new Line_(this.start_.sub(rhs), this.end_.sub(rhs));
+}
+Line_.prototype.mul = function mul(rhs) {
+    if (rhs instanceof Line_)
+        return new Line_(this.start_.mul(rhs.start_), this.end_.mul(rhs.end_));
+    else
+        return new Line_(this.start_.mul(rhs), this.end_.mul(rhs));
+}
+Line_.prototype.cnorm = function cnorm() {
+    return new Line_(this.start_.cnorm(), this.end_.cnorm());
+}
+Line_.prototype.vec = function vec() {
+    return this.end_.sub(this.start_).resetorigin();
+}
+function formatRGB(...args) {
+    if (args.length != 3)
+        throw new Error("Wrong rgb");
+    var col = "#" + Math.round(args[0]).toString(16).padStart(2, '0')
+                  + Math.round(args[1]).toString(16).padStart(2, '0')
+                  + Math.round(args[2]).toString(16).padStart(2, '0')
+    return col;
+}
 
-        const style = new StyleManager();
-        common_style(style);
-        console.log(style);
-        console.log(style.grid_axis.get_chain());
-        import { mat4 } from './source/math/mat.js';
-        let m = mat4().identity(4);
+const Graph_ = function Graph_() { this.onconstruct(); };
+function Graph() { return new Graph_(); };
+
+Graph_.prototype.setCanvas = function setCanvas(canvas2d, canvasgl) { let graph = this;
+    graph.unsetCanvas();
+    graph.canvas2d = canvas2d;
+    graph.context2d = canvas2d.getContext('2d');
+    
+    
+    const match = /(?<value>\d+\.?\d*)/
+    graph.origFontSize = graph.context2d.font.match(match).groups.value;
+    graph.newFontSize = Math.round(graph.origFontSize * graph.pixelRatio);
+    graph.context2d.font = graph.context2d.font.replace(match, ''+graph.newFontSize);
+
+    graph.attachCanvasListeners(graph.canvas2d);
+    if (!graph.context2d)
+        throw new Error('Failed to get 2d context.');
+    if (canvasgl) {
+        graph.canvasgl = canvasgl;
+        graph.contextgl = getGL(canvasgl);
+        if (!graph.contextgl) {
+            throw new Error('Failed to get the gl context.');
+        }
+    }
+    
+    graph.start();
+    return graph;
+}
+
+Graph_.prototype.unsetCanvas = function unsetCanvas() { let graph = this;
+    if (!graph.canvas2d)
+        return;
+    graph.stop();
+    graph.detachCanvasListeners(graph.canvas2d);
+    graph.canvas2d = null;
+    graph.context2d = null;
+    graph.canvasgl = null;
+    graph.contextgl = null;
+    return graph;
+}
+
+Graph_.prototype.setPixelRatio = function setPixelRatio(pixelRatio) { let graph = this;
+    graph.pixelRatio = pixelRatio;
+    return graph;
+}
+Graph_.prototype.resetPixelRatio = function resetPixelRatio() { let graph = this;
+    graph.pixelRatio = 1.0;
+    return graph;
+}
+
+function graphDraw() { let graph = this; }
+Graph_.prototype.setDraw = function(draw) { let graph = this;
+    graph.draw = draw;
+    return graph;
+}
+Graph_.prototype.unsetDraw = function() { let graph = this;
+    return graph;
+}
+
+Graph_.prototype.setShader = function(fragmentShaderText) { let graph = this;
+    var vertex_shader = document.getElementById('vertex-shader').text.trim();
+    var fragment_shader = document.getElementById('fragment-shader').text.trim();
+    var user_code = fragmentShaderText;
+    fragment_shader = fragment_shader.replace('%%MAIN_IMAGE_INSERT%%', user_code);
+    graph.program = createProgramFromSources(graph.contextgl, vertex_shader, fragment_shader);
+    if (!graph.program) {
+        console.log('Code: ', user_code);
+        throw new Error('Failed to initialize shaders.');
+    }
+    graph.contextgl.useProgram(graph.program);
+    graph.contextgl.clearColor(0.0, 0.0, 0.0, 1.0);
+    let gl = graph.contextgl;
+    
+    var vertices = new Float32Array([-1.0, 1.0,
+                                     -1.0, -1.0,
+                                     1.0, 1.0,
+                                     1.0, -1.0]);
+    var vertexNumber = vertices.length/2;
+    
+    var vertexBuffer = gl.createBuffer();
+    if (!vertexBuffer) {
+        throw new Error('Failed to create a buffer object');
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+    var a_Position = gl.getAttribLocation(graph.program, 'a_Position');
+    if (a_Position < 0) {
+        throw new Error('Failed to get the storage location of a_Position');
+    }
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Position);
+    
+    graph.vertexNumber = vertexNumber;
+    graph.shaderisset = true;
+    return graph;
+}
+Graph_.prototype.unsetShader = function unsetShader() { let graph = this;
+    
+}
+
+Graph_.prototype.updatePr = function updatePr() { let graph = this;
+    if (pixelr) {
+        let pr = window.devicePixelRatio;
+        if (pr < 4/3) {
+            graph.pixelRatio = pr;
+        } else if (pr >= 4/3 && pr < 2) {
+            graph.pixelRatio = pr * 3/4;
+        } else if (pr >= 2 && pr < 3) {
+            graph.pixelRatio = pr * 1/2;
+        } else if (pr >= 3 && pr < 4) {
+            graph.pixelRatio = pr * 1/3;
+        } else {
+            graph.pixelRatio = pr * 1/4;
+        }
+    } else graph.pixelRatio = 1.0;
+}
+
+Graph_.prototype.start = function start(startTime) { let graph = this;
+    graph.startTime = startTime? startTime : Date.now();
+    if (!graph.elapsed) {
+        graph.elapsed = graph.startTime;
+        graph.elapsedPrev = graph.startTime;
+    }
+    graph.onstart();
+    let update = function() {
+        graph.updatePr();
+        
+        graph.elapsedPrev = graph.elapsed;
+        graph.elapsed = (Date.now() - graph.startTime) / 1000.0;
+        graph.adjust_scale(graph.elapsed - graph.elapsedPrev);
+        graph.adjust_position(graph.elapsed - graph.elapsedPrev);
+        if (graph.contextgl && graph.shaderisset) {
+            graph.contextgl.clear(graph.contextgl.COLOR_BUFFER_BIT);
+    
+            var u_Time = graph.contextgl.getUniformLocation(graph.program, 'u_Time');
+            graph.contextgl.uniform1f(u_Time, graph.elapsed);
+            var u_TimeDelta = graph.contextgl.getUniformLocation(graph.program, 'u_TimeDelta');
+            graph.contextgl.uniform1f(u_TimeDelta, graph.elapsed-graph.elapsedPrev);
+            
+            graph.contextgl.drawArrays(graph.contextgl.TRIANGLE_STRIP, 0, graph.vertexNumber);
+        }
+        
+        graph.drawbackground();
+        graph.drawgrid();
+        if (window.devicePixelRatio <= 1 || logiv) {
+            graph.drawinfo();
+        }
+        graph.draw();
+        
+        graph.requestAnimationFrameId = window.requestAnimationFrame(update);
+        //graph.requestAnimationFrameId = window.setTimeout(update, 1000/60);
+    }
+    update();
+}
+Graph_.prototype.stop = function stop() { let graph = this;
+    if (!graph.requestAnimationFrameId)
+        return;
+    graph.onstop();
+    cancelAnimationFrame(graph.requestAnimationFrameId);
+    //window.clearTimeout(graph.requestAnimationFrameId);
+    graph.requestAnimationFrameId = null;
+    return;
+}
+
+
+Graph_.prototype.initializePlane = function initializePlane() { let graph = this;
+    graph.canvas2d = null;
+    graph.context2d = null;
+    graph.canvasgl = null;
+    graph.contextgl = null;
+    
+    graph.pixelRatio = 1.0;
+    
+    graph.lastMouseOverX = 0.0;
+    graph.lastMouseOverY = 0.0;
+    
+    graph.sumMovementX = 0.0;
+    graph.sumMovementY = 0.0;
+    graph.animMovementX = 0.0;
+    graph.animMovementY = 0.0;
+    
+    graph.canvas_real_size = {'w': 0, 'h': 0};
+    graph.canvas_size = {'w': 0, 'h': 0};
+    
+    graph.aspect_ratio = 1.0; // width/height
+    
+    graph.shift = {'x': 0.0, 'y': 0.0}; // Current view central point
+    graph.span_base = 5.0; // Default distance from shift to vertical view borders, horizontal multiplied by aspect_ratio
+    
+    graph.scale_speed = 0;
+    graph.scale_count = 0; // Number of wheel rolls in directions
+    graph.scale = 1.0; // Multiplies span_base by itself as pow(constant, scale_count)
+    
+    graph.span = {'h': 0.0, 'v': 0.0}; // h - view distance from shift to left and right, v - to top and bottom
+    
+    graph.plane_size = {'w': 0.0, 'h': 0.0}; // Size of view in plane coordinates
+    
+    graph.min = {'x': 0.0, 'y': 0.0}; // Plane values on view borders
+    graph.max = {'x': 0.0, 'y': 0.0};
+    
+    graph.grid_count = 10; // Average number of vertical grid segments, horizontal are multiplied by aspect_ratio and ceiled
+    graph.grid_step = 1.0;
+    graph.grid_scale_count = 0;
+    graph.grid_center = {'x': 0.0, 'y': 0.0};
+    
+    graph.background_color = '#202020'; // "#353535";
+}
+Graph_.prototype.calculatePlane = function calculatePlane() { let graph = this;
+    graph.canvas_real_size.w = graph.canvas2d.clientWidth;
+    graph.canvas_real_size.h = graph.canvas2d.clientHeight;
+    graph.canvas2d.width = graph.canvas2d.clientWidth*graph.pixelRatio;
+    graph.canvas2d.height = graph.canvas2d.clientHeight*graph.pixelRatio;
+    if (graph.canvasgl && graph.shaderisset) {
+        graph.canvasgl.width = graph.canvas2d.clientWidth*graph.pixelRatio;
+        graph.canvasgl.height = graph.canvas2d.clientHeight*graph.pixelRatio;
+    }
+    
+    graph.canvas_size = {'w': graph.canvas2d.width, 'h': graph.canvas2d.height};
+
+    graph.aspect_ratio = graph.canvas_size.w / Math.max(1, graph.canvas_size.h);
+    
+    graph.scale = Math.pow(1.06778997, graph.scale_count);
+    
+    graph.span = {'h': graph.span_base*graph.scale*graph.aspect_ratio, 'v': graph.span_base*graph.scale};
+    
+    graph.plane_size = {'w': graph.span.h*2, 'h': graph.span.v*2};
+    
+    graph.min = {'x': graph.shift.x - graph.span.h, 'y': graph.shift.y - graph.span.v};
+    graph.max = {'x': graph.shift.x + graph.span.h, 'y': graph.shift.y + graph.span.v};
+    
+    if (graph.contextgl && graph.shaderisset) {
+        let gl = graph.contextgl;
+        
+        gl.viewport(0, 0, graph.canvas_size.w, graph.canvas_size.h);
+        var u_Resolution = gl.getUniformLocation(graph.program, 'u_Resolution');
+        if (u_Resolution)
+            gl.uniform3f(u_Resolution, graph.canvas_size.w, graph.canvas_size.h, graph.canvas_size.w/graph.canvas_size.h);
+            
+        var u_Plane = gl.getUniformLocation(graph.program, 'u_Plane');
+        if (u_Plane)
+            gl.uniform4f(u_Plane, graph.min.x, graph.min.y, graph.max.x, graph.max.y);
+    }
+}
+
+Graph_.prototype.canvas_x = function canvas_x(plane_x) { let graph = this;
+    return (plane_x - graph.min.x)/graph.plane_size.w*graph.canvas_size.w;
+}
+Graph_.prototype.canvas_y = function canvas_y(plane_y) { let graph = this;
+    return (graph.max.y - plane_y)/graph.plane_size.h*graph.canvas_size.h;
+}
+Graph_.prototype.plane_x = function plane_x(canvas_x) { let graph = this;
+    return graph.min.x + canvas_x/graph.canvas_size.w*graph.plane_size.w;
+}
+Graph_.prototype.plane_y = function plane_y(canvas_y) { let graph = this;
+    return graph.max.y - canvas_y/graph.canvas_size.h*graph.plane_size.h;
+}
+Graph_.prototype.translate_x = function translate_x(x, type) { let graph = this;
+    if (type == 'c' || type == 'canvas')
+        return x;
+    return graph.canvas_x(x);
+}
+Graph_.prototype.translate_y = function translate_y(y, type) { let graph = this;
+    if (type == 'c' || type == 'canvas')
+        return y;
+    return graph.canvas_y(y);
+}
+
+Graph_.prototype.onconstruct = function onconstruct() { let graph = this;
+    graph.draw = function(){};
+    graph.initializePlane();
+}
+
+Graph_.prototype.attachCanvasListeners = function attachCanvasListeners(canvas) { let graph = this;
+    graph.resizeObserver = new ResizeObserver(function() {
+        graph.onsizechanged();
+    });
+    graph.resizeObserver.observe(canvas);
+    graph.mousedownListener = function(event) {
+        graph.onmousedown(event);
+    }
+    canvas.addEventListener('mousedown', graph.mousedownListener);
+    graph.mouseupListener = function(event) {
+        graph.onmouseup(event);
+    }
+    canvas.addEventListener('mouseup', graph.mouseupListener);
+    graph.mousemoveListener = function(event) {
+        graph.onmousemove(event);
+    }
+    canvas.addEventListener('mousemove', graph.mousemoveListener);
+    graph.mouseoverListener = function(event) {
+        graph.onmouseover(event);
+    }
+    canvas.addEventListener('mouseover', graph.mouseoverListener);
+    graph.mousewheelListener = function(event) {
+        graph.onmousewheel(event);
+    }
+    canvas.addEventListener('wheel', graph.mousewheelListener);
+    graph.touchstartListener = function(event) {
+        graph.ontouchstart(event);
+    }
+    canvas.addEventListener('touchstart', graph.touchstartListener, {passive: false});
+    graph.touchmoveListener = function(event) {
+        graph.ontouchmove(event);
+    }
+    canvas.addEventListener('touchmove', graph.touchmoveListener, {passive: false});
+    graph.touchendListener = function(event) {
+        graph.ontouchend(event);
+    }
+    canvas.addEventListener('touchend', graph.touchendListener, {passive: false});
+}
+Graph_.prototype.detachCanvasListeners = function detachCanvasListeners(canvas) {
+    if (graph.resizeObserver) {
+        graph.resizeObserver.unobserve(canvas);
+        graph.resizeObserver = null;
+    }
+    if (graph.mousedownListener) {
+        canvas.removeEventListener('mousedown', graph.mousedownListener);
+        graph.mousedownListener = null;
+    }
+    if (graph.mouseupListener) {
+        canvas.removeEventListener('mouseup', graph.mouseupListener);
+        graph.mouseupListener = null;
+    }
+    if (graph.mousemoveListener) {
+        canvas.removeEventListener('mousemove', graph.mousemoveListener);
+        graph.mousemoveListener = null;
+    }
+    if (graph.mouseoverListener) {
+        canvas.removeEventListener('mouseover', graph.mouseoverListener);
+        graph.mouseoverListener = null;
+    }
+    if (graph.mousewheelListener) {
+        canvas.removeEventListener('wheel', graph.mousewheelListener);
+        graph.mousewheelListener = null;
+    }
+    if (graph.touchstartListener) {
+        canvas.removeEventListener('touchstart', graph.touchstartListener);
+        graph.touchstartListener = null;
+    }
+    if (graph.touchmoveListener) {
+        canvas.removeEventListener('touchmove', graph.touchmoveListener);
+        graph.touchmoveListener = null;
+    }
+    if (graph.touchendListener) {
+        canvas.removeEventListener('touchend', graph.touchendListener);
+        graph.touchendListener = null;
+    }
+}
+
+Graph_.prototype.onstart = function onstart() { let graph = this;
+    graph.calculatePlane();
+    graph.calculateGrid();
+}
+Graph_.prototype.onstop = function onstop() { let graph = this;
+    
+}
+Graph_.prototype.onsizechanged = function onsizechanged() { let graph = this;
+    let startTime = graph.startTime;
+    graph.stop();
+    graph.calculatePlane();
+    graph.start(startTime);
+}
+Graph_.prototype.onmousedown = function onmousedown(event) { let graph = this;
+    graph.mouse_pressed = true;
+}
+Graph_.prototype.onmouseup = function onmouseup(event) { let graph = this;
+    graph.mouse_pressed = false;
+}
+Graph_.prototype.onmousemove = function onmousemove(event) { let graph = this;
+    graph.lastMouseOverX = event.clientX - graph.canvas2d.getBoundingClientRect().left;
+    graph.lastMouseOverY = event.clientY - graph.canvas2d.getBoundingClientRect().top;
+    if (!graph.mouse_pressed)
+        return;
+    graph.sumMovementX += event.movementX;
+    graph.sumMovementY += event.movementY;
+}
+Graph_.prototype.onmouseover = function onmouseover(event) { let graph = this;
+
+}
+var lastSign = 1.0;
+Graph_.prototype.onmousewheel = function onmousewheel(event) { let graph = this;
+    if (lastSign != Math.sign(event.deltaY))
+        graph.scale_speed = 0.0;
+    graph.scale_speed += Math.sign(event.deltaY);
+    lastSign = Math.sign(event.deltaY);
+    
+    graph.lastMouseX = event.offsetX;
+    graph.lastMouseY = event.offsetY;
+}
+
+var touches = [];
+var touch2 = [];
+var logiv = false;
+var pixelr = true;
+
+Graph_.prototype.ontouchstart = function ontouchstart(event) { let graph = this;
+    for (let i = 0; i < event.changedTouches.length; ++i) {
+        let id = event.changedTouches[i].identifier;
+        let present = false;
+        let j = 0;
+        for (;j < touches.length; ++j)
+            if (touches[j].id == id) {
+                present = true;
+                break;
+            }
+        if (!present)
+            touches.push({'id': id, 'clientX': event.changedTouches[i].clientX, 'clientY': event.changedTouches[i].clientY});
+    }
+    
+    let t = Date.now();
+    touch2.push({'t': Date.now(), 'x': event.changedTouches[0].clientX, 'y': event.changedTouches[0].clientY});
+    touch2 = touch2.filter((x) => t - 500 < x.t);
+    while (touch2.length > 4)
+        touch2.shift();
+    if (touch2.length == 4) {
+        let co = true;
+        let p = {'x': touch2[0].x, 'y': touch2[0].y};
+        for (let i = 1; i < touch2.length; ++i) {
+            let e = touch2[i];
+            if (Math.pow(e.x - p.x, 2) + Math.pow(e.y - p.y, 2) > 250) {
+                co = false;
+                break;
+            }
+        }
+        if (co) {
+            let r = event.target.getBoundingClientRect();
+            if (p.x <= r.right && p.x >= r.right - 50 && p.y <= r.bottom && p.y >= r.bottom - 50) {
+                pixelr = !pixelr;
+                let startTime = graph.startTime;
+                graph.stop();
+                graph.updatePr();
+                graph.calculatePlane();
+                graph.start(startTime);
+            } else {
+                logiv = !logiv;
+            }
+            touch2 = [];
+        }
+    }
+    
+    event.stopPropagation();
+    event.preventDefault();
+}
+
+function mfind(arr, p) {
+    for (let i = 0; i < arr.length; ++i)
+        if (p(arr[i]))
+            return arr[i];
+    return null;
+}
+let prevscdir = 1.0;
+Graph_.prototype.ontouchmove = function ontouchmove(event) { let graph = this;
+    if (touches.length == 1) {
+        let tp = touches[0];
+        let tc = event.changedTouches[0];
+        
+        let sp = vec2(tp.clientX, tp.clientY);
+        let ep = vec2(tc.clientX, tc.clientY);
+        
+        graph.sumMovementX += ep.sub(sp).x();
+        graph.sumMovementY += ep.sub(sp).y();
+        
+        tp.clientX = tc.clientX;
+        tp.clientY = tc.clientY;
+        event.stopPropagation();
+        event.preventDefault();
+    } else if (touches.length > 1) {
+        let tp1 = touches[0];
+        let tc1 = mfind(event.targetTouches, (x) => x.identifier == tp1.id);
+        let tp2 = touches[1];
+        let tc2 = mfind(event.targetTouches, (x) => x.identifier == tp2.id);
+        
+        
+        let sp1 = vec2(tp1.clientX, tp1.clientY);
+        let ep1 = vec2(tc1.clientX, tc1.clientY);
+        let l1 = line(sp1, ep1);
+        let v1 = l1.vec();
+        
+        let sp2 = vec2(tp2.clientX, tp2.clientY);
+        let ep2 = vec2(tc2.clientX, tc2.clientY);
+        let l2 = line(sp2, ep2);
+        let v2 = l2.vec();
+        
+        let c = ep1.add(ep2).mul(0.5);
+    
+        let cv1 = line(ep1, c).vec();
+        let cv2 = line(ep2, c).vec();
+        
+        let cc1 = v1.project(cv1);
+        let cc2 = v2.project(cv2);
+        
+        let acc = v1.add(v2).sub(cc1.add(cc2));
+        
+        if (cc1.length() < cc2.length())
+            [cc1, cc2] = [cc2, cc1];
+        
+        let sc = cc2;
+        
+        let mc = cc1.add(cc2);
+        
+        let acm = acc;
+        
+        graph.sumMovementX += acm.x()/2 + mc.x()/2;
+        graph.sumMovementY += acm.y()/2 + mc.y()/2;
+
+        graph.lastMouseX = c.x() - graph.canvas2d.getBoundingClientRect().left;
+        graph.lastMouseY = c.y() - graph.canvas2d.getBoundingClientRect().top;
+        
+        let scv = sc.length();
+        
+        let scdir = Math.sign(sp1.sub(sp2).length() - ep1.sub(ep2).length());
+        if (prevscdir != scdir) {
+            graph.scale_speed = 0.0;
+            prevscdir = scdir;
+        }
+        graph.scale_speed += scdir*scv;
+        
+        graph.touchev = true;
+        
+        for (let i = 0; i < event.targetTouches.length; ++i) {
+            tc = event.targetTouches[i];
+            tp = mfind(touches, (x) => x.id == tc.identifier);
+            tp.clientX = tc.clientX;
+            tp.clientY = tc.clientY;
+        }
+        
+        event.stopPropagation();
+        event.preventDefault();
+    }
+}
+
+Graph_.prototype.ontouchend = function ontouchend(event) { let graph = this;
+    for (let i = 0; i < event.changedTouches.length; ++i) {
+        let id = event.changedTouches[i].identifier;
+        let present = false;
+        let j = 0;
+        for (;j < touches.length; ++j)
+            if (touches[j].id == id) {
+                present = true;
+                break;
+            }
+        if (present)
+            touches.splice(j, 1);
+    }
+    event.stopPropagation();
+    event.preventDefault();
+}
+
+Graph_.prototype.adjust_scale = function adjust_scale(timediff) { let graph = this;
+    if (!graph.scale_speed)
+        return;
+    
+    let mouse_start = {'x': graph.plane_x(graph.lastMouseX*graph.pixelRatio), 'y': graph.plane_y(graph.lastMouseY*graph.pixelRatio)};
+    
+    if (graph.scale_speed >= 200.0)
+            graph.scale_speed = 200.0;
+    else if (graph.scale_speed <= -200.0)
+            graph.scale_speed = -200.0;
+            
+    if (graph.touchev) {
+        graph.scale_count += graph.scale_speed*Math.min(2, timediff)*3.0;
+        if (graph.scale_count < -5200) {
+            graph.scale_count = -5200;
+            graph.scale_speed = 0;
+        }
+        graph.scale_speed /= Math.pow(28, 1.7*Math.min(10000, timediff)); //1.035
+    } else {            
+        graph.scale_count += graph.scale_speed*Math.min(2, timediff)*16.0;
+        if (graph.scale_count < -5200) {
+            graph.scale_count = -5200;
+            graph.scale_speed = 0;
+        }
+        graph.scale_speed /= Math.pow(16, 0.8*Math.min(10000, timediff)); //1.035
+    }
+    if (Math.abs(graph.scale_speed) < 0.05)
+        graph.scale_speed = 0.0;
+    
+    graph.calculatePlane();
+    let mouse_end = {'x': graph.plane_x(graph.lastMouseX*graph.pixelRatio), 'y': graph.plane_y(graph.lastMouseY*graph.pixelRatio)};
+    graph.shift.x += mouse_start.x - mouse_end.x;
+    graph.shift.y += mouse_start.y - mouse_end.y;
+    graph.calculatePlane();
+    graph.calculateGrid();
+}
+
+Graph_.prototype.move_on = function move_on(canvas_dx, canvas_dy) { let graph = this;
+    let plane_dx = canvas_dx/graph.canvas_size.w*graph.pixelRatio*graph.plane_size.w;
+    let plane_dy = -canvas_dy/graph.canvas_size.h*graph.pixelRatio*graph.plane_size.h;
+    graph.shift.x -= plane_dx;
+    graph.shift.y -= plane_dy;
+    
+}
+Graph_.prototype.adjust_position = function adjust_position(timediff) { let graph = this;
+    if (!graph.sumMovementX && !graph.sumMovementY && !graph.animMovementX && !graph.animMovementY)
+        return;
+        
+    let momentary_proportion = 0.5;
+    
+    if (graph.sumMovementX >= 5000)
+        graph.sumMovementX = 5000;
+    else if (graph.sumMovementX <= -5000)
+        graph.sumMovementX = -5000;
+    if (graph.sumMovementY >= 5000)
+        graph.sumMovementY = 5000;
+    else if (graph.sumMovementY <= -5000)
+        graph.sumMovementY = -5000;
+    
+    let momentary_dx = graph.sumMovementX * momentary_proportion;
+    let momentary_dy = graph.sumMovementY * momentary_proportion;
+
+    graph.move_on(momentary_dx, momentary_dy);
+    
+    let anim_x = graph.animMovementX * 15*Math.min(2, timediff) * (1.0 - momentary_proportion);
+    graph.animMovementX /= Math.pow(64, 2*Math.min(10000, timediff));
+    let anim_y = graph.animMovementY * 15*Math.min(2, timediff) * (1.0 - momentary_proportion);
+    graph.animMovementY /= Math.pow(64, 2*Math.min(10000, timediff));
+    graph.move_on(anim_x, anim_y);
+    
+    graph.calculatePlane();
+    graph.calculateGrid();
+    
+    if (Math.abs(graph.animMovementX) < 0.03)
+        graph.animMovementX = 0.0;
+    if (Math.abs(graph.animMovementY) < 0.03)
+        graph.animMovementY = 0.0;
+    
+    graph.animMovementX += graph.sumMovementX * (1.0 - momentary_proportion)*1.0;
+    graph.animMovementY += graph.sumMovementY * (1.0 - momentary_proportion)*1.0;
+    
+    graph.sumMovementX = 0;
+    graph.sumMovementY = 0;
+}
+
+
+
+
+
+
+
+Graph_.prototype.drawtext = function drawtext(text, x, y, offset_cx, offset_cy, type) { let graph = this;
+    if (!offset_cx) offset_cx = 0;
+    if (!offset_cy) offset_cy = 0;
+    let ctx = graph.context2d;
+    x = graph.translate_x(x, type); y = graph.translate_y(y, type);
+    ctx.fillText(text, x + offset_cx, y + offset_cy);
+}
+Graph_.prototype.drawline = function drawline(x0, y0, x1, y1, type) { let graph = this;
+    let ctx = graph.context2d;
+    x0 = graph.translate_x(x0, type); y0 = graph.translate_y(y0, type);
+    x1 = graph.translate_x(x1, type); y1 = graph.translate_y(y1, type);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+}
+Graph_.prototype.drawarrow = function drawarrow(x0, y0, x1, y1, type) { let graph = this;
+    let ctx = graph.context2d;
+    x0 = graph.translate_x(x0, type); y0 = graph.translate_y(y0, type);
+    x1 = graph.translate_x(x1, type); y1 = graph.translate_y(y1, type);
+    const head_len = 16;
+    const head_angle = Math.PI / 6;
+    const angle = Math.atan2(y1 - y0, x1 - x0);
+    
+    x1 -= ctx.lineWidth * Math.cos(angle);
+    y1 -= ctx.lineWidth * Math.sin(angle);
+    
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x1 - head_len * Math.cos(angle - head_angle), y1 - head_len * Math.sin(angle - head_angle));
+    ctx.lineTo(x1 - head_len * Math.cos(angle + head_angle), y1 - head_len * Math.sin(angle + head_angle));
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+}
+Graph_.prototype.drawpoint = function drawpoint(x, y, size, type) { let graph = this;
+    if (!size) size = 0;
+    let ctx = graph.context2d;
+    x = graph.translate_x(x, type); y = graph.translate_y(y, type);
+    ctx.fillRect(x-(ctx.lineWidth-size)/2-size, y-(ctx.lineWidth-size)/2-size, ctx.lineWidth+size, ctx.lineWidth+size);
+}
+
+Graph_.prototype.drawbackground = function drawbackground() { let graph = this; let ctx = graph.context2d;
+    ctx.clearRect(0, 0, graph.canvas_size.w, graph.canvas_size.h);
+
+}
+Graph_.prototype.calculateGrid = function calculateGrid() { let graph = this;
+    let getGridStep = function getGridStep(n) {
+        let two_power = Math.sign(n)*( Math.floor( Math.floor((Math.abs(n) + 0.5) % 4) % 3) + Math.floor((Math.abs(n) + 0.5)/4) );
+        let five_power = Math.sign(n)*Math.floor((Math.abs(n) + 1.5)/4);
+        return Math.pow(2.0, two_power)*Math.pow(5.0, five_power);
+    }
+    let frac_step = Math.max(graph.plane_size.w/graph.grid_count, graph.plane_size.h/graph.grid_count);
+    while (graph.grid_step < frac_step) {
+        graph.grid_scale_count += 1;
+        graph.grid_step = getGridStep(graph.grid_scale_count);
+    }
+    while (true) {
+        let grid_scale_count = graph.grid_scale_count - 1;
+        let grid_step = getGridStep(grid_scale_count);
+        if (grid_step < frac_step) {
+            let lesser_diff = frac_step - grid_step;
+            let bigger_diff = graph.grid_step - frac_step;
+            if (bigger_diff > lesser_diff) {
+                graph.grid_scale_count = grid_scale_count;
+                graph.grid_step = grid_step;
+            }
+            break;
+        }
+        graph.grid_scale_count = grid_scale_count;
+        graph.grid_step = grid_step;
+    }
+    
+    graph.grid_center.x = Math.trunc(graph.shift.x/graph.grid_step)*graph.grid_step;
+    graph.grid_center.y = Math.trunc(graph.shift.y/graph.grid_step)*graph.grid_step;
+}
+/// add polar
+Graph_.prototype.drawgrid = function drawgrid() { let graph = this; let ctx = graph.context2d;
+    let strokeStyle_prev = ctx.strokeStyle;
+    ctx.strokeStyle = "#FFFFFF";
+    let fillStyle_prev = ctx.fillStyle;
+    ctx.fillStyle = "#FFFFFF";
+    let lineWidth_prev = ctx.lineWidth;
+    ctx.lineWidth = Math.round(graph.pixelRatio);
+    
+    let font_prev = ctx.font;
+    ctx.font = 'italic ' + Math.round(9*graph.pixelRatio) + 'pt sans-serif';
+    let textAlign_prev = ctx.textAlign;
+    ctx.textAlign = 'left';
+    let textBaseline_prev = ctx.textBaseline;
+    ctx.textBaseline = 'top';
+    
+    let shift = 0;
+    let hm = 2.0/graph.canvas_size.h*graph.plane_size.h;
+    let wm = 2.0/graph.canvas_size.w*graph.plane_size.w;
+
+    let format_grid_number = function(number) {
+        let text = (number).toFixed(12);
+        if (text.match(/\./))
+            return text.replace(/[.]*[0]+$/, '');
+        return text;
+    }
+    
+    let draw_horizontal = function(shift) {
+        if (Math.abs(shift) < graph.scale/100.0)
+            return;
+        graph.drawline(graph.min.x, shift, graph.max.x, shift);
+        let text = format_grid_number(shift);
+        let metrics = ctx.measureText(text);
+        let text_width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft)/graph.canvas_size.w*graph.plane_size.w;
+        let text_x = Math.min(Math.max(0.0 + wm, graph.min.x), graph.max.x - text_width);
+        graph.drawtext(text, text_x, shift - hm);
+    }
+    shift = graph.grid_center.y;
+    draw_horizontal(shift);
+    shift = graph.grid_center.y + graph.grid_step;
+    while (shift < graph.shift.y + graph.span.v) {
+        draw_horizontal(shift);
+        shift += graph.grid_step;
+    }
+    shift = graph.grid_center.y - graph.grid_step;
+    while (shift > graph.shift.y - graph.span.v) {
+        draw_horizontal(shift);
+        shift -= graph.grid_step;
+    }
+    
+    let draw_vertical = function(shift) {
+        if (Math.abs(shift) < graph.scale/100.0)
+            return;
+        graph.drawline(shift, graph.min.y, shift, graph.max.y);
+        let text = format_grid_number(shift);
+        let metrics = ctx.measureText(text);
+        let text_height = (metrics.actualBoundingBoxDescent)/graph.canvas_size.w*graph.plane_size.w;
+        let text_y = Math.min(Math.max(0.0 - hm, graph.min.y + text_height), graph.max.y);
+        graph.drawtext(text, shift + wm, text_y);
+    }
+    shift = graph.grid_center.x;
+    draw_vertical(shift);
+    shift = graph.grid_center.x + graph.grid_step;
+    while (shift < graph.shift.x + graph.span.h) {
+        draw_vertical(shift);
+        shift += graph.grid_step;
+    }
+    shift = graph.grid_center.x - graph.grid_step;
+    while (shift > graph.shift.x - graph.span.h) {
+        draw_vertical(shift);
+        shift -= graph.grid_step;
+    }
+    
+    shift = 0;
+    let text = (shift).toString();
+    let metrics = ctx.measureText(text);
+    let text_height = (metrics.actualBoundingBoxDescent)/graph.canvas_size.w*graph.plane_size.w;
+    let text_width = (metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft)/graph.canvas_size.w*graph.plane_size.w;
+    if (0.0 > graph.min.x && 0.0 < graph.max.x || 0.0 > graph.min.y && 0.0 < graph.max.y) {
+        let text_x = Math.min(Math.max(0.0 + wm, graph.min.x), graph.max.x - text_width);
+        let text_y = Math.min(Math.max(0.0 - hm, graph.min.y + text_height), graph.max.y);
+        graph.drawtext(text, text_x, text_y);
+    }
+    
+    ctx.lineWidth = Math.round(2*graph.pixelRatio);
+    graph.drawline(0, graph.min.y, 0, graph.max.y);
+    graph.drawline(graph.min.x, 0, graph.max.x, 0);
+    
+    ctx.strokeStyle = strokeStyle_prev;
+    ctx.fillStyle = fillStyle_prev;
+    ctx.lineWidth = lineWidth_prev;
+    
+    ctx.font = font_prev;
+    ctx.textAlign = textAlign_prev;
+    ctx.textBaseline = textBaseline_prev;
+}
+Graph_.prototype.drawinfo = function drawinfo() { let graph = this; let ctx = graph.context2d;
+    let strokeStyle_prev = ctx.strokeStyle;
+    ctx.strokeStyle = "#FFFFFF";
+    let fillStyle_prev = ctx.fillStyle;
+    ctx.fillStyle = "#FFFFFF";
+    
+    let font_prev = ctx.font;
+    ctx.font = 'italic ' + Math.round(9*graph.pixelRatio) + 'pt sans-serif';
+    let textAlign_prev = ctx.textAlign;
+    ctx.textAlign = 'left';
+    let textBaseline_prev = ctx.textBaseline;
+    ctx.textBaseline = 'top';
+
+    let format = function(number) {
+        let text = (number).toFixed(4);
+        if (text.match(/\./))
+            text = text.replace(/[.]*[0]+$/, '');
+        return text
+    }
+    
+    strings = [
+        'Real canvas: ' + format(graph.canvas_real_size.w) + ' ' + format(graph.canvas_real_size.h),
+        'Render canvas: ' + format(graph.canvas_size.w) + ' ' + format(graph.canvas_size.h),
+        'Plane shift: ' + format(graph.shift.x) + ' ' + format(graph.shift.y),
+        'Span:  ' + format(graph.span.h) + ' ' + format(graph.span.v),
+        'Min:   ' + format(graph.min.x) + ' ' + format(graph.min.y),
+        'Max:   ' + format(graph.max.x) + ' ' + format(graph.max.y),
+        'Scale: ' + format(graph.scale),
+        'Scale count: ' + format(graph.scale_count),
+        'Grid scale count: ' + format(graph.grid_scale_count),
+        'Grid step: ' + format(graph.grid_step),
+        'DPRG: ' + format(graph.pixelRatio),
+        'DPR: ' + format(window.devicePixelRatio), 
+    ]
+    
+    for (let i = 0; i < strings.length; ++i)
+        graph.drawtext(strings[i], 5, ((5 + 13*i)*graph.pixelRatio), 0, 0, 'c');
+    
+    ctx.strokeStyle = strokeStyle_prev;
+    ctx.fillStyle = fillStyle_prev;
+    
+    ctx.font = font_prev;
+    ctx.textAlign = textAlign_prev;
+    ctx.textBaseline = textBaseline_prev;
+}
+
+
+
+
+var getGL = function(canvas) {
+    var names = ["webgl2"];
+    var context = null;
+    for (var i = 0; i < names.length; ++i) {
+        try {
+            context = canvas.getContext(names[i]);
+        } catch(e) {}
+            if (context) {
+                break;
+            }
+        }
+    return context;
+}
+
+function createShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+        return shader;
+    }
+ 
+    console.log(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    throw new Error('Failed to compile shader');
+}
+
+function createProgram(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+        return program;
+    }
+ 
+    console.log(gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    throw new Error('Failed to create program');
+}
+        
+function createProgramFromSources(gl, vertexShaderSource, fragmentShaderSource) {
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var program = createProgram(gl, vertexShader, fragmentShader);
+    return program;
+}
+    
+if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = (function() {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(callback, element) {
+                window.setTimeout(callback, 1000/60);
+        };
+    })();
+}
+if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = (window.cancelRequestAnimationFrame ||
+        window.webkitCancelAnimationFrame || window.webkitCancelRequestAnimationFrame ||
+        window.mozCancelAnimationFrame || window.mozCancelRequestAnimationFrame ||
+        window.msCancelAnimationFrame || window.msCancelRequestAnimationFrame ||
+        window.oCancelAnimationFrame || window.oCancelRequestAnimationFrame ||
+        window.clearTimeout);
+}
+        
     </script>
+    <!-- Fragment interface -->
+    <script id="main-image" type="fragment-shader-piece">
+        float hueToRgb(float p, float q, float t) {
+            if (t < 0.0) t += 1.0;
+            if (t > 1.0) t -= 1.0;
+            if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
+            if (t < 1.0/2.0) return q;
+            if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
+            return p;
+        }
+        vec3 hsl(float h, float s, float l) {
+            float r, g, b;
+            if (s == 0.0) {
+                r = g = b = l; // achromatic
+            } else {
+                float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+                float p = 2.0 * l - q;
+                r = hueToRgb(p, q, h + 1.0/3.0);
+                g = hueToRgb(p, q, h);
+                b = hueToRgb(p, q, h - 1.0/3.0);
+            }
+            return vec3(r, g, b);
+        }
+        int move(int v, int d, int max) {
+            return (v + d) % max;
+        }
+        vec2 cx_pow(vec2 a, float n) {
+            float angle = atan(a.y, a.x);
+            float r = length(a);
+            float real = pow(r, n) * cos(n*angle);
+            float im = pow(r, n) * sin(n*angle);
+            return vec2(real, im);
+        }
+        int checkEscape(vec2 c, int imax, float r) {
+            vec2 z = vec2(0.0, 0.0);
+            
+            for (int i = 0; i < imax; ++i) {
+                vec2 zp = z;
+                z.x = zp.x*zp.x - zp.y*zp.y + c.x;
+                z.y = 2.0*zp.x*zp.y + c.y;
+                if (z.x*z.x + z.y*z.y > r) {
+                    return i;
+                }
+            }
+        }
+        
+        void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+            vec2 uv = (2.0*fragCoord - iResolution.xy)/iResolution.y;
+            vec2 mouse_uv = (2.0*iMouse.xy - iResolution.xy)/iResolution.y;
+            vec2 min = vec2(iPlane.x, iPlane.y);
+            vec2 max = vec2(iPlane.z, iPlane.w);
+            vec2 p = vec2(uv.x*abs(max.x-min.x)/2.0*iResolution.y/iResolution.x +(max.x+min.x)/2.0, uv.y*abs(max.y-min.y)/2.0 + (max.y+min.y)/2.0);
+            
+
+            vec3 base = vec3(153.0/256.0, 204.0/256.0, 255.0/256.0);
+            vec3 col = base/6.0;
+            
+            int imax = 1000;
+            int i = checkEscape(p, imax, 4.0);
+            if (i < imax) {
+                col = base*pow(float(i)*40.0/float(2000), 0.5);
+            }
+            fragColor = vec4(col, 1.0);
+        }
+    </script>
+    <!-- Setting up fragments to fill screen -->
+    <script id="vertex-shader" type="vertex-shader">
+        #version 300 es
+        precision highp float;
+        
+        in vec4 a_Position;
+        void main() {
+            gl_Position = a_Position;
+        }
+    </script>
+    <!-- Setting up state for interface -->
+    <script id="fragment-shader" type="fragment-shader">
+        #version 300 es
+        precision highp float;
+        
+        #define PI 3.1415926535897932384626433832795
+        
+        uniform vec3 u_Resolution;
+        #define iResolution u_Resolution
+        uniform float u_Time;
+        #define iTime u_Time
+        uniform float u_TimeDelta;
+        #define iTimeDelta u_TimeDelta
+        uniform vec4 u_Mouse;
+        #define iMouse u_Mouse
+        
+        uniform vec4 u_Plane;
+        #define iPlane u_Plane
+        
+        %%MAIN_IMAGE_INSERT%%
+        
+        out vec4 ofragColor;
+        void main() {
+            mainImage(ofragColor, gl_FragCoord.xy);
+        }
+    </script> 
 </body>
 
 </html>

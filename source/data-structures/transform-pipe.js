@@ -1,7 +1,7 @@
 
 import { reduce_arrays } from '../algorithms/array-mods.js';
 import IterableWeakSet from './iterable-weak-set.js';
-import Mat, { mat, mat2, mat3, mat4, vec2, vec3, vec4 } from '../math/mat.js';
+import Mat, { mat, mat4 } from '../math/mat.js';
 
 // This thing is awful and needs total rewriting, and update on get doesn't work
 
@@ -78,12 +78,10 @@ Pipe.prototype.update = function() {
     if (this.combined.dim_h != last.dim_h || this.combined.dim_v != last.dim_v)
         this.combined = mat(last.dim_v, last.dim_h);
     this.combined.assign(last);
-    console.log(last);
     for (let i = this.list.length - 2; i >= 0; --i) {
         if (!this.map.has(this.list[i]))
             throw new Error(`Pipe: ${this.list[i]} transform not found in ${this.name}`);
         this.combined.mul_inplace(this.map.get(this.list[i]).transform);
-        console.log(this.map.get(this.list[i]).transform);
     }
     this.need_update = false;
 };

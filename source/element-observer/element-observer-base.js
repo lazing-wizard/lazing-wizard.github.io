@@ -110,12 +110,10 @@ ElementObserverBase.prototype.construct_name = function(event_type) {
 ElementObserverBase.prototype.observe = function(element, ...args) {
     const delegates = args.filter((arg) => (typeof arg !== 'string') && arg);
     const events = args.filter((arg) => typeof arg === 'string');
-    
     if (this.element != element) {
         this.unobserve();
         this.element = element;
     }
-
     if (delegates) {
         this.set_delegates(...delegates);
     }
